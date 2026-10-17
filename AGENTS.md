@@ -4,10 +4,10 @@
 Android arm64 与桌面跑起来。
 
 - 包名：`com.happyelements.xstorycncatdetective`
-- 底包路线：官方 6.12 + OPPO 6.12 的 arm64 native 库合并；两者游戏内容逐字节相同，只差渠道外壳
+- 底包路线：官方 6.12 + `compat/arm64-v8a/`（OPPO 6.12 的 7 个 arm64 库）；两包游戏内容逐字节相同，只差渠道外壳
 - 没有通用构建系统、测试套件、CI、包管理器；构建由 `tools/pipeline.toml` + `tools/build.py` 驱动
 - 原包在 `源文件/`，勿提交
-- 公开仓库不包含：游戏 APK、解包 JS/资源、签名密钥、构建产物、中间产物
+- 公开仓库不包含：完整 APK、解包 JS/资源、签名密钥、构建产物、中间产物；`compat/` 是唯一例外
 
 ## 术语陷阱
 
@@ -20,8 +20,9 @@ Android arm64 与桌面跑起来。
 
 ```bash
 # 1. 解包；解密 JS 落在 assets/src-js/（带 -js），不是 assets/src/
+# 官方与 OPPO 游戏内容一致，把官方包解到历史路径 work/extracted/oppo 即可
 export JSC_KEY='f309100a-33de-4c'
-tools/unpack_apk.sh 源文件/橘猫侦探社_6.12_OPPO.apk work/extracted/oppo
+tools/unpack_apk.sh 源文件/橘猫侦探社_6.12_官方official.apk work/extracted/oppo
 
 # 2. 改 work/extracted/oppo/assets/src-js/project.js
 
@@ -109,7 +110,8 @@ export KS_ALIAS=daju
 ## 目录
 
 ```text
-源文件/                 三个原始 APK（162 MB，勿提交）
+源文件/                 原始 APK（勿提交）
+compat/                 7 个 OPPO 6.12 arm64 兼容库（来源/校验和见 compat/README.md）
 tools/                  解包/加密/打包/patch + pipeline.toml + build.py
 docs/                   修改列表、原版代码分析、代码文档、游戏代码文档
 work/extracted/         解包现场（gitignore；oppo/assets/src-js = 解密后 JS）

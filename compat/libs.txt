@@ -1,0 +1,7 @@
+lib39285EFA.so
+libbreakpad-hei.so
+libbuffer_pg.so
+libcocos2djs.so
+libfile_lock_pg.so
+libnms.so
+libtobEmbedEncrypt.so

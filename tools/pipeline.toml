@@ -10,7 +10,7 @@
 #
 # 约定：
 #   - 所有路径都相对仓库根目录；路径以 / 开头则视为绝对路径。
-#   - stage.base = "merged" 表示「官方底包 + OPPO arm64 库」；
+#   - stage.base = "merged" 表示「官方底包 + compat/OPPO arm64 库」；
 #     其它值必须是另一个 stage.id。
 #   - stage.patches 按顺序串成 JS 链；最后一个 patch 的 out 就是该 stage 的 JS。
 #   - 每个 stage 的 APK 由 repack_apk.sh 生成，overlay 目录默认 work/build/official-arm64-<id>。
@@ -29,6 +29,8 @@ repack_script = "tools/repack_apk.sh"
 
 [merge]
 script = "tools/merge_official_arm64.sh"
+compat_dir = "compat/arm64-v8a"
+compat_manifest = "compat/libs.txt"
 
 # ---------------------------------------------------------------------------
 # 补丁：id = 脚本 + 输入输出约定

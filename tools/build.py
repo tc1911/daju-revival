@@ -148,6 +148,20 @@ def show_list(cfg: dict) -> None:
         print(f"{s['id']:16} {s['base']:16} {patches:48} {s['apk_out']}{legacy}{suffix}")
 
 
+def compat_ready(cfg: dict) -> bool:
+    merge = cfg.get("merge", {})
+    compat_dir = path_of(merge.get("compat_dir", "compat/arm64-v8a"))
+    manifest = path_of(merge.get("compat_manifest", "compat/libs.txt"))
+    if not compat_dir.is_dir() or not manifest.is_file():
+        return False
+    names = [
+        line.strip()
+        for line in manifest.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    return bool(names) and all((compat_dir / name).is_file() for name in names)
+
+
 def ensure_merged(cfg: dict, dry: bool, no_deps: bool) -> Path:
     paths = cfg["paths"]
     official = path_of(paths["official_apk"])
@@ -159,8 +173,11 @@ def ensure_merged(cfg: dict, dry: bool, no_deps: bool) -> Path:
         print(f"== 跳过 merge（--no-deps）: {merged}")
         return merged
     require(official, "官方底包")
-    require(oppo, "OPPO 包")
-    print("== 合并官方底包 + OPPO arm64 库")
+    if not compat_ready(cfg):
+        require(oppo, "OPPO 包")
+        print("== 合并官方底包 + OPPO arm64 库")
+    else:
+        print("== 合并官方底包 + compat/arm64-v8a 库")
     run_bash(cfg["merge"]["script"], official, oppo, merged, dry=dry)
     return merged
 

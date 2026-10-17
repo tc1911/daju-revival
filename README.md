@@ -4,7 +4,7 @@
 目标：脱离已停运的官方服务器，在 **Android arm64** 与 **桌面** 上离线运行。
 
 - `daju-revival` 来自公告原文「大橘为重」
-- 底包：官方 6.12 + OPPO 6.12 的 arm64 native 库（两包游戏内容逐字节相同）
+- 底包：官方 6.12 + `compat/arm64-v8a/`（从 OPPO 6.12 提取的 7 个 arm64 库）
 - 原包在 `源文件/`，勿提交
 
 ## 当前状态
@@ -47,14 +47,18 @@ export KS_ALIAS=daju
 
 ## 开源范围
 
-本仓库**不包含**：游戏 APK、解包后的 JS/资源、签名密钥、构建产物、中间产物。
-使用前需要自备原版 APK；签名 key 由使用者自己生成/保管。
+本仓库**不包含**：完整游戏 APK、解包后的 JS/资源、签名密钥、构建产物、中间产物。
+使用前需要自备官方 6.12 APK；签名 key 由使用者自己生成/保管。
+
+例外：`compat/arm64-v8a/` 是 7 个从 OPPO 6.12 提取的 native 兼容库（约 18 MB），
+用于“只提供官方 APK”时补 arm64；版权归原权利人，来源和风险见 `compat/README.md`。
 
 ## 快速开始
 
 ```bash
 # 解包 + 解出 JS（已解过可复用；JSC_KEY 必须已 export）
-tools/unpack_apk.sh 源文件/橘猫侦探社_6.12_OPPO.apk work/extracted/oppo
+# 官方包和 OPPO 包游戏内容一致；这里把官方包解到历史路径 work/extracted/oppo
+tools/unpack_apk.sh 源文件/橘猫侦探社_6.12_官方official.apk work/extracted/oppo
 
 # 构建：阶段/补丁顺序都在 tools/pipeline.toml，build.py 按表执行
 tools/build.py list
@@ -70,14 +74,15 @@ adb install -r work/out/official-arm64-profile-native.apk
 ## 目录
 
 ```
-源文件/                   三个原始 APK（162 MB，勿提交）
+源文件/                   原始 APK（勿提交）
+compat/                   7 个 OPPO 6.12 arm64 兼容库 + 来源/校验和
 tools/                    解包/加密/打包/patch + pipeline.toml + build.py
 docs/                     修改列表、原版代码分析、代码文档、游戏代码文档
 work/extracted/           解包现场（gitignore）
 work/build/               overlay（gitignore）
 work/out/                 成品 APK（gitignore）
 work/tmp/                 构建缓存 + 调试现场（gitignore）
-work/keystore/          本地签名密钥（gitignore，不提交）
+work/keystore/           本地签名密钥（gitignore，不提交）
 ```
 
 ## 文档
