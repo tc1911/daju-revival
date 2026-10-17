@@ -1,0 +1,15 @@
+# 游戏本体 / 解包产物 / 构建产物 / 中间产物
+work/
+源文件/
+out/
+*.apk
+*.idsig
+
+# 签名密钥与本地环境
+*.jks
+*.keystore
+.env
+
+# 日志 / 缓存
+*.log
+__pycache__/

@@ -1,0 +1,208 @@
+# 构建映射表（唯一事实来源）
+#
+# 用法：
+#   tools/build.py list
+#   tools/build.py                 # 构建 default_stage
+#   tools/build.py nopay
+#   tools/build.py back
+#   tools/build.py daily --out /tmp/daily.apk
+#   tools/build.py profile-native --dry-run
+#
+# 约定：
+#   - 所有路径都相对仓库根目录；路径以 / 开头则视为绝对路径。
+#   - stage.base = "merged" 表示「官方底包 + OPPO arm64 库」；
+#     其它值必须是另一个 stage.id。
+#   - stage.patches 按顺序串成 JS 链；最后一个 patch 的 out 就是该 stage 的 JS。
+#   - 每个 stage 的 APK 由 repack_apk.sh 生成，overlay 目录默认 work/build/official-arm64-<id>。
+
+version = 1
+default_stage = "profile-native"
+
+[paths]
+official_apk = "源文件/橘猫侦探社_6.12_官方official.apk"
+oppo_apk = "源文件/橘猫侦探社_6.12_OPPO.apk"
+merged_apk = "work/out/official-arm64.apk"
+base_js = "work/extracted/oppo/assets/src-js/project.js"
+base_main_js = "work/extracted/oppo/assets/main.js"
+main_nohot = "work/tmp/main_nohot.js"
+repack_script = "tools/repack_apk.sh"
+
+[merge]
+script = "tools/merge_official_arm64.sh"
+
+# ---------------------------------------------------------------------------
+# 补丁：id = 脚本 + 输入输出约定
+# ---------------------------------------------------------------------------
+
+[patches.offline]
+script = "tools/offline_skip_launcher.py"
+out = "work/tmp/project.offline.js"
+desc = "跳过 login_getClientConfig 与热更检查"
+
+[patches.local]
+script = "tools/local_account_patch.py"
+out = "work/tmp/project.local.js"
+desc = "本地 mock 账号、用户数据/业务协议兜底"
+
+[patches.monetization]
+script = "tools/remove_monetization_patch.py"
+out = "work/tmp/project.nopay.js"
+desc = "移除发现页氪金/充电/签到入口"
+
+[patches.album]
+script = "tools/album_perf_patch.py"
+out = "work/tmp/project.album.js"
+desc = "相册 refreshView 分帧"
+
+[patches.back_button]
+script = "tools/back_button_patch.py"
+out = "work/tmp/project.back.js"
+desc = "JS 返回键层级导航"
+
+[patches.daily_currency]
+script = "tools/daily_currency_patch.py"
+out = "work/tmp/project.daily.js"
+desc = "今日行程本地任务 + 银币袋"
+
+[patches.rmb_shop]
+script = "tools/remove_rmb_shop_patch.py"
+out = "work/tmp/project.shop.js"
+desc = "只过滤人民币 cash 商品"
+
+[patches.custom_profile]
+script = "tools/custom_profile_patch.py"
+out = "work/tmp/project.profile.js"
+desc = "原生昵称/头像编辑"
+
+[patches.settings_cleanup]
+script = "tools/settings_cleanup_patch.py"
+out = "work/tmp/project.settings.js"
+desc = "设置页精简 + 电量 HUD + 持久化根修复"
+
+[patches.chat_image]
+script = "tools/chat_image_fallback_patch.py"
+out = "work/tmp/project.final.js"
+desc = "聊天图片预览离线兜底"
+
+[patches.remove_shop]
+script = "tools/remove_shop_patch.py"
+out = "work/tmp/project.noshop.js"
+desc = "历史：彻底关商店"
+
+# ---------------------------------------------------------------------------
+# 资源 / main.js 步骤
+# ---------------------------------------------------------------------------
+
+[assets.daily_currency]
+script = "tools/daily_currency_assets.py"
+desc = "今日行程/银币袋资源 JSON"
+
+[main_js]
+script = "tools/disable_hotupdate_main.py"
+
+# ---------------------------------------------------------------------------
+# 原生步骤
+# ---------------------------------------------------------------------------
+
+[native.back]
+official_apk = "源文件/橘猫侦探社_6.12_官方official.apk"
+apktool_dir = "work/tmp/official_back_full"
+apktool_framework = "work/tmp/apktool_framework"
+build_apk = "work/tmp/official_back_build.apk"
+smali_dir = "smali_classes2"
+smali_patch = "tools/back_smali_patch.py"
+dex = ["classes.dex", "classes2.dex"]
+
+[native.profile_bridge]
+java = "tools/profile_bridge/ProfileBridge.java"
+android_jar = "work/tmp/native_profile/android.jar"
+android_jar_url = "https://repo1.maven.org/maven2/com/google/android/android/4.1.1.4/android-4.1.1.4.jar"
+classes_dir = "work/tmp/native_profile/classes"
+classes_jar = "work/tmp/native_profile/classes.jar"
+dex_dir = "work/tmp/native_profile/dexout"
+dex_name = "classes3.dex"
+java11 = "/usr/lib/jvm/zulu-11/bin/java"
+d8_jar = "/opt/android-sdk/build-tools/37.0.0/lib/d8.jar"
+
+# ---------------------------------------------------------------------------
+# 阶段：主链 nopay -> back -> daily -> shop -> profile -> profile-native
+# ---------------------------------------------------------------------------
+
+[[stages]]
+id = "offline"
+desc = "历史：只跳过启动网络"
+base = "merged"
+patches = ["offline"]
+apk_out = "work/out/official-arm64-offline1.apk"
+legacy = true
+
+[[stages]]
+id = "local"
+desc = "历史：多架构 + 离线 + 本地账号"
+base = "merged"
+patches = ["offline", "local"]
+apk_out = "work/out/official-arm64-local.apk"
+legacy = true
+
+[[stages]]
+id = "nopay"
+desc = "主链 1：多架构 + 离线 + 本地账号 + 去氪金 + 相册"
+base = "merged"
+patches = ["offline", "local", "monetization", "album"]
+apk_out = "work/out/official-arm64-local-nopay.apk"
+
+[[stages]]
+id = "back"
+desc = "主链 2：返回键 JS + native smali 桥，apktool 重编 dex"
+base = "nopay"
+rebuild_base = true
+patches = ["back_button"]
+native = "back"
+apk_out = "work/out/official-arm64-back.apk"
+
+[[stages]]
+id = "daily"
+desc = "主链 3：今日行程 + 银币袋 + 资源 JSON"
+base = "back"
+patches = ["daily_currency"]
+assets = ["daily_currency"]
+apk_out = "work/out/official-arm64-daily.apk"
+
+[[stages]]
+id = "shop"
+desc = "主链 4：只移除人民币内购"
+base = "daily"
+patches = ["rmb_shop"]
+apk_out = "work/out/official-arm64-shop.apk"
+
+[[stages]]
+id = "profile-js"
+desc = "历史：只有资料编辑 JS"
+base = "shop"
+patches = ["custom_profile"]
+apk_out = "work/out/official-arm64-profile-js.apk"
+legacy = true
+
+[[stages]]
+id = "profile"
+desc = "主链 5：资料/设置/图片预览 + main.js 清热更"
+base = "shop"
+patches = ["custom_profile", "settings_cleanup", "chat_image"]
+main_js = true
+apk_out = "work/out/official-arm64-profile.apk"
+
+[[stages]]
+id = "profile-native"
+desc = "主链 6：ProfileBridge 编成 classes3.dex，最终包"
+base = "profile"
+rebuild_base = true
+dex = "profile_bridge"
+apk_out = "work/out/official-arm64-profile-native.apk"
+
+[[stages]]
+id = "noshop"
+desc = "历史：彻底关商店"
+base = "daily"
+patches = ["remove_shop"]
+apk_out = "work/out/official-arm64-noshop.apk"
+legacy = true
