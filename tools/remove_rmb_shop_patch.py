@@ -115,18 +115,18 @@ var __kids = __si.children;
 for (var __i = 0; __i < __kids.length; __i++) {
 if (__kids[__i].name == "shop_lab_001" && Math.abs(__kids[__i].y + 325) < 8) {
 __kids[__i].active = true;
-__kids[__i].setPosition(-190, -385);
+__kids[__i].setPosition(-190, -415);
 }
 if (__kids[__i].name == "line_4") {
 __kids[__i].active = true;
-__kids[__i].setPosition(0, -365);
+__kids[__i].setPosition(0, -395);
 }
 }
 var __info = this.node.getChildByName("container").getChildByName("shopInfo");
 if (__info) __info.height = 820;
 var __sv = this.node.getChildByName("container").getChildByName("ScrollView");
 if (__sv) {
-__sv.y = -20;
+__sv.y = -80;
 __sv.height = 400;
 var __view = __sv.getChildByName("view");
 if (__view) __view.height = 400;
