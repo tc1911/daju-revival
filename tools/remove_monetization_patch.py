@@ -98,6 +98,20 @@ showArrow: !0
         sys.exit(f"patch feedback entry: expected 1 match, found {text.count(old_feedback)}")
     text = text.replace(old_feedback, "")
 
+    # 服务器已停，客服入口一并移除。
+    old_service = '''e.push({
+name: getText("MainView_13"),
+height: 80,
+id: p.contentItemType.FeedBack,
+noLine: !1,
+icon: "icon_service",
+showArrow: !0
+});
+'''
+    if text.count(old_service) != 1:
+        sys.exit(f"patch service entry: expected 1 match, found {text.count(old_service)}")
+    text = text.replace(old_service, "")
+
     # “我”页成就列表：去掉“累计看广告充电次数”(60000005) 与“累计充值”(60000006)。
     ach_old = "for (o in n) {\ni = n[o];\nt.push({"
     ach_new = "for (o in n) {\ni = n[o];\nif (\"60000005\" == i.serverId || \"60000006\" == i.serverId) continue;\nt.push({"
