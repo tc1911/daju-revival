@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""只移除商店里的人民币(cash)购买项，保留商城和游戏内货币购买。
+"""精简商城本体：移除人民币内购与相关弹窗，保留游戏内货币商品。
 
 - ShopUI.getUserInfo：过滤 specialItemList/soulItemList 中 currencyType == "cash"
   的商品（这些来自 product_allplatform，是真实货币内购）。
 - Common.showAppBuySpecialStatusDialog：人民币礼包弹窗置为 toast + return 1。
+- ShopUI.refreshView：隐藏人民币余额；特惠位为空时隐藏，避免 [0]/[1] 越界。
+- ShopUI.refreshItem：只刷新仍在显示的特惠位。
+- ShopUI.onClickButton：返回不再触发“人民币不足”礼包弹窗。
 - 不拦截 ShopUI，商城主界面继续可用。
 """
 import sys
@@ -15,6 +18,7 @@ def main() -> None:
     src, out = sys.argv[1], sys.argv[2]
     text = open(src, encoding="utf-8").read()
 
+    # 1) 过滤人民币商品
     old = '''this.specialItemList = e;
 this.soulItemList = t;'''
     new = '''this.specialItemList = e.filter(function(e) {
@@ -27,6 +31,50 @@ return "cash" != e.currencyType;
         sys.exit(f"shop item lists anchor: expected 1, found {text.count(old)}")
     text = text.replace(old, new)
 
+    # 2) 特惠位为空时隐藏，避免 refreshView 取 [0]/[1]
+    refresh_old = '''this.shopItem1.refreshItem(this.specialItemList[0], this.buyItemId);
+this.shopItem2.refreshItem(this.specialItemList[1], this.buyItemId);'''
+    refresh_new = '''var s1 = this.specialItemList[0], s2 = this.specialItemList[1];
+this.shopItem1.node.active = !!s1;
+this.shopItem2.node.active = !!s2;
+if (s1) this.shopItem1.refreshItem(s1, this.buyItemId);
+if (s2) this.shopItem2.refreshItem(s2, this.buyItemId);
+this.rmbCount.node.active = !1;
+var addBtn = cc.find("container/shopInfo/btn_add", this.node);
+if (addBtn) addBtn.active = !1;'''
+    if text.count(refresh_old) != 1:
+        sys.exit(f"shop refreshView anchor: expected 1, found {text.count(refresh_old)}")
+    text = text.replace(refresh_old, refresh_new)
+
+    # 3) 隐藏后不再刷新特惠位
+    item_old = '''this.shopItem1.refreshLabel();
+this.shopItem2.refreshLabel();'''
+    item_new = '''if (this.shopItem1.node.active) this.shopItem1.refreshLabel();
+if (this.shopItem2.node.active) this.shopItem2.refreshLabel();'''
+    if text.count(item_old) != 1:
+        sys.exit(f"shop refreshItem anchor: expected 1, found {text.count(item_old)}")
+    text = text.replace(item_old, item_new)
+
+    # 4) 返回不再弹“人民币不足”礼包
+    back_old = '''case "back<Button>":
+if (!u.default.canClick()) return;
+if (u.default.userInfo().getItemCount(u.ItemType.rmb) < 120) {
+u.default.userInfo().showTimeLimitPack([ 1 ], function() {
+c.default.UIManager.popUI(l.GameSceneUIType.ShopUI, !0);
+});
+return;
+}
+c.default.UIManager.popUI(l.GameSceneUIType.ShopUI, !0);
+break;'''
+    back_new = '''case "back<Button>":
+if (!u.default.canClick()) return;
+c.default.UIManager.popUI(l.GameSceneUIType.ShopUI, !0);
+break;'''
+    if text.count(back_old) != 1:
+        sys.exit(f"shop back anchor: expected 1, found {text.count(back_old)}")
+    text = text.replace(back_old, back_new)
+
+    # 5) 人民币礼包弹窗直接 toast
     start = text.find("e.showAppBuySpecialStatusDialog = function(t, n, o, i, r) {")
     end = text.find("e.friendIsAdd = function(e) {", start)
     if start < 0 or end < 0:
@@ -39,7 +87,7 @@ return 1;
     text = text[:start] + stub + text[end:]
 
     open(out, "w", encoding="utf-8").write(text)
-    print(f"RMB shop options removed: {src} -> {out}")
+    print(f"shop trimmed: {src} -> {out}")
 
 
 if __name__ == "__main__":

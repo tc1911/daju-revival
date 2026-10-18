@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""移除氪金 / 充电 / 每日签到入口。
+"""移除签到/充电/活动入口，保留商城。
 
 处理：
-  1. MainView.addMoodLayer：只保留 朋友圈、今日行程、案件记录、隐藏的故事；
-     移除 7日福利(LoginBonus/签到)、商城(Shop)、睡前充电(ReserveRecharge)、
+  1. MainView.addMoodLayer：保留 朋友圈、今日行程、商城、案件记录、隐藏的故事；
+     移除 7日福利(LoginBonus/签到)、睡前充电(ReserveRecharge)、
      共享充电宝(FreeRecharge)、活动(Activity_coin)、侦探训练营(Peripheral)。
+     商城本体由 remove_rmb_shop_patch.py 精简。
   2. UserInfo.popLogin：置空，关掉每日签到/7日福利弹窗。
 
 电量：本地账号补丁已让 costElectricityV2 每次都返回 100，读完消息不会掉电，
@@ -22,6 +23,13 @@ height: 90,
 id: p.contentItemType.Tweet,
 noLine: !0,
 icon: "icon_social",
+showArrow: !0
+}, {
+name: getText("MainView_6"),
+height: 90,
+id: p.contentItemType.Shop,
+noLine: !0,
+icon: "icon_store",
 showArrow: !0
 }, {
 name: getText("MainView_9"),

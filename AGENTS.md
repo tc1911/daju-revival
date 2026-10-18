@@ -63,7 +63,7 @@ tools/build.py daily --out work/out/x.apk  # 覆盖输出
 nopay（merge + offline + local + monetization + album）
   → back（JS 返回键 + native smali，重编 dex）
   → daily（今日任务 + 银币袋 + 资源 JSON）
-  → shop（只过滤人民币商品）
+  → shop（精简商城：过滤人民币/隐藏余额/修特惠位）
   → profile（资料/设置/图片 + main.js 清热更）
   → profile-native（ProfileBridge → classes3.dex）
 ```
@@ -133,7 +133,7 @@ work/keystore/          本地签名密钥（gitignore，不提交）
 - Android arm64 主链已跑通，产物 `work/out/official-arm64-profile-native.apk`；
   构建由 `tools/pipeline.toml` 一张表驱动，`tools/build.py` 执行；
   大小/SHA256/签名/实机状态见 `docs/修改列表.md` 第 0 节
-- 已完成：离线启动、本地账号与协议兜底、持久化根修复、去氪金主入口、
+- 已完成：离线启动、本地账号与协议兜底、持久化根修复、保留商城入口、
   相册分帧、返回键层级、设置页精简、资料编辑、电量 HUD、聊天图片离线兜底
 - 未完成：深度氪金/充电残留、`main.js` 彻底去热更、HeSDK/广告 SDK、桌面路线
 - 已知近似：电池 HUD 是自绘覆盖；头像裁剪是自动居中，不是可拖动框
