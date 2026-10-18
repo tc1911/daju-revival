@@ -31,6 +31,7 @@ def main() -> None:
         if name == "plan":
             task = d.get("json", {}).get("8")
             if isinstance(task, dict):
+                task["description"] = "每日签到"
                 task["itemID"] = "50001002"
                 task["itemCount"] = 5000
                 changed = True
@@ -39,17 +40,27 @@ def main() -> None:
         elif name == "item":
             item = d.get("json", {}).get("50000002")
             if isinstance(item, dict):
-                item["name"] = "银币袋"
-                item["description"] = "使用即可获得5000银币"
-                item["icon"] = "50001002"
+                item["name"] = "充电宝（已废弃）"
+                item["description"] = "已废弃，不再提供电量"
+                item["icon"] = "50000002"
                 item["onSale"] = False
+                item["usable"] = False
                 changed = True
                 count["item"] += 1
 
         elif name == "string":
+            replacements = {
+                "MainView_9": "每日签到",
+                "DailyTask_1": "每日签到",
+                "DailyTask_2": "每日签到",
+                "user_list_item_2": "每日签到",
+                "user_list_item_3": "每日签到，获得以下奖励",
+                "user_list_item_4": "每日签到，获得以下奖励",
+                "pfb_DailyTask_1": "每日签到可获得 5000 银币 + 500 金币",
+            }
             for k, v in d.get("json", {}).items():
-                if isinstance(v, str) and "全部完成可获得充电宝" in v:
-                    d["json"][k] = v.replace("全部完成可获得充电宝", "全部完成可获得银币")
+                if k in replacements and v != replacements[k]:
+                    d["json"][k] = replacements[k]
                     changed = True
             if changed:
                 count["string"] += 1
