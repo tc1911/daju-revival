@@ -14,13 +14,79 @@
 import sys
 
 
+SHOP_DAILY_JS = """
+(function() {
+function dajuDayKey() {
+var d = new Date();
+return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+}
+function dajuDaily() {
+var key = dajuDayKey(), o = {};
+try { o = JSON.parse(cc.sys.localStorage.getItem("daju_shop_daily") || "{}") || {}; } catch (e) {}
+if (o.date != key) o = { date: key, counts: {} };
+if (!o.counts) o.counts = {};
+return o;
+}
+window.__dajuShopUsed = function(id) {
+var o = dajuDaily();
+return Number(o.counts[String(id)] || 0);
+};
+window.__dajuShopAdd = function(id, n) {
+var o = dajuDaily(), k = String(id), v = Number(o.counts[k] || 0) + Number(n || 0);
+o.counts[k] = Math.min(3, v);
+cc.sys.localStorage.setItem("daju_shop_daily", JSON.stringify(o));
+return o.counts[k];
+};
+})();
+"""
+
+
 def main() -> None:
     if len(sys.argv) != 3:
         sys.exit("usage: tools/remove_rmb_shop_patch.py <decrypted-project.js> <output.js>")
     src, out = sys.argv[1], sys.argv[2]
     text = open(src, encoding="utf-8").read()
 
-    # 1) 过滤人民币商品
+    # 1) 今日特价：每日 2 礼物 + 1 功能道具，半价，限购 3
+    pool_old = '''for (_ in m) (v = m[_]).onSale && "50100023" != v.serverId && (y == v.discountDay ? e.push(v) : t.push(v));'''
+    pool_new = '''var __gifts = [], __funcs = [];
+for (_ in m) {
+v = m[_];
+if (!v || "cash" == v.currencyType) continue;
+var __sid = String(v.serverId);
+if (__sid >= "50000101" && __sid <= "50000110") __gifts.push(v);
+else if ("50000001" == __sid || "50000003" == __sid || "50000004" == __sid || "50000005" == __sid || "50000007" == __sid) __funcs.push(v);
+}
+var __now = new Date(u.default.userInfo().serverTime || Date.now());
+var __seed = __now.getFullYear() * 372 + __now.getMonth() * 31 + __now.getDate();
+var __mk = function(v) {
+var q = {};
+for (var k in v) q[k] = v[k];
+var p = Number(v.price) || 0;
+q.price = p;
+q.discountPrice = Math.floor(p / 2);
+q.originPrice = p;
+q.discountDay = __now.getDay() || 7;
+q.dailyLimit = 3;
+q.dailyBought = window.__dajuShopUsed ? window.__dajuShopUsed(v.serverId) : 0;
+q.description = (v.description || "") + " · 每日限购3";
+return q;
+};
+if (__gifts.length >= 2 && __funcs.length >= 1) {
+var __g1 = __gifts[__seed % __gifts.length];
+var __g2 = __gifts[(__seed + 1 + (__seed % (__gifts.length - 1))) % __gifts.length];
+var __f1 = __funcs[__seed % __funcs.length];
+e = [__mk(__g1), __mk(__g2), __mk(__f1)];
+}
+var __specialIds = {};
+for (var __ei = 0; __ei < e.length; __ei++) __specialIds[String(e[__ei].serverId)] = 1;
+for (_ in m) {
+v = m[_];
+if (v && "cash" != v.currencyType && !__specialIds[String(v.serverId)]) t.push(v);
+}'''
+    if text.count(pool_old) != 1:
+        sys.exit(f"shop daily pool anchor: expected 1, found {text.count(pool_old)}")
+    text = text.replace(pool_old, pool_new)
     old = '''this.specialItemList = e;
 this.soulItemList = t;'''
     new = '''this.specialItemList = e.filter(function(e) {
@@ -36,11 +102,33 @@ return "cash" != e.currencyType;
     # 2) 特惠位为空时隐藏，避免 refreshView 取 [0]/[1]
     refresh_old = '''this.shopItem1.refreshItem(this.specialItemList[0], this.buyItemId);
 this.shopItem2.refreshItem(this.specialItemList[1], this.buyItemId);'''
-    refresh_new = '''var s1 = this.specialItemList[0], s2 = this.specialItemList[1];
+    refresh_new = '''if (!this.shopItem3) {
+var __si = this.shopItem1.node.parent;
+var __n = cc.instantiate(this.shopItem1.node);
+__n.name = "shopItem3";
+__n.setPosition(0, -340.5);
+__si.addChild(__n);
+this.shopItem3 = __n.getComponent("shop_item");
+var __kids = __si.children;
+for (var __i = 0; __i < __kids.length; __i++) {
+if (__kids[__i].name == "shop_lab_001" && Math.abs(__kids[__i].y + 325) < 8) __kids[__i].active = false;
+if (__kids[__i].name == "line_4") __kids[__i].active = false;
+}
+var __sv = this.node.getChildByName("container").getChildByName("ScrollView");
+if (__sv) {
+__sv.y = -20;
+__sv.height = 400;
+var __view = __sv.getChildByName("view");
+if (__view) __view.height = 400;
+}
+}
+var s1 = this.specialItemList[0], s2 = this.specialItemList[1], s3 = this.specialItemList[2];
 this.shopItem1.node.active = !!s1;
 this.shopItem2.node.active = !!s2;
+this.shopItem3.node.active = !!s3;
 if (s1) this.shopItem1.refreshItem(s1, this.buyItemId);
-if (s2) this.shopItem2.refreshItem(s2, this.buyItemId);'''
+if (s2) this.shopItem2.refreshItem(s2, this.buyItemId);
+if (s3) this.shopItem3.refreshItem(s3, this.buyItemId);'''
     if text.count(refresh_old) != 1:
         sys.exit(f"shop refreshView anchor: expected 1, found {text.count(refresh_old)}")
     text = text.replace(refresh_old, refresh_new)
@@ -49,7 +137,8 @@ if (s2) this.shopItem2.refreshItem(s2, this.buyItemId);'''
     item_old = '''this.shopItem1.refreshLabel();
 this.shopItem2.refreshLabel();'''
     item_new = '''if (this.shopItem1.node.active) this.shopItem1.refreshLabel();
-if (this.shopItem2.node.active) this.shopItem2.refreshLabel();'''
+if (this.shopItem2.node.active) this.shopItem2.refreshLabel();
+if (this.shopItem3 && this.shopItem3.node.active) this.shopItem3.refreshLabel();'''
     if text.count(item_old) != 1:
         sys.exit(f"shop refreshItem anchor: expected 1, found {text.count(item_old)}")
     text = text.replace(item_old, item_new)
@@ -86,7 +175,81 @@ break;'''
         sys.exit(f"shop gacha callback anchor: expected 1, found {text.count(gacha_cb_old)}")
     text = text.replace(gacha_cb_old, gacha_cb_new, 1)
 
-    # 6) 人民币礼包弹窗直接 toast
+    # 6) 今日特价限购 3：ShopSell 购买前检查，成功后记账
+    buy_old = '''t.prototype.buyItem = function() {
+var e = this;
+if (r.default.canClick()) if (r.default.userInfo().getItemCount(this.itemInfo.currencyType) < this.buyCount * this.singlePrice) {'''
+    buy_new = '''t.prototype.buyItem = function() {
+var e = this;
+var __dl = Number(this.itemInfo && this.itemInfo.dailyLimit || 0);
+if (__dl > 0) {
+var __used = window.__dajuShopUsed ? window.__dajuShopUsed(this.itemInfo.serverId) : 0;
+var __left = __dl - __used;
+if (__left <= 0) {
+r.default.showToast("今日已限购 " + __dl + " 个");
+return;
+}
+if (this.buyCount > __left) {
+r.default.showToast("今日最多还能购买 " + __left + " 个");
+return;
+}
+}
+if (r.default.canClick()) if (r.default.userInfo().getItemCount(this.itemInfo.currencyType) < this.buyCount * this.singlePrice) {'''
+    if text.count(buy_old) != 1:
+        sys.exit(f"shop sell guard anchor: expected 1, found {text.count(buy_old)}")
+    text = text.replace(buy_old, buy_new, 1)
+
+    buy_cb_old = '''r.default.userInfo().buyItem(this.itemInfo.serverId, this.buyCount, this.itemInfo.currencyType, this.buyCount * this.singlePrice, function() {
+"50100023" != e.itemInfo.serverId'''
+    buy_cb_new = '''r.default.userInfo().buyItem(this.itemInfo.serverId, this.buyCount, this.itemInfo.currencyType, this.buyCount * this.singlePrice, function() {
+window.__dajuShopAdd && window.__dajuShopAdd(e.itemInfo.serverId, e.buyCount);
+"50100023" != e.itemInfo.serverId'''
+    if text.count(buy_cb_old) != 1:
+        sys.exit(f"shop sell callback anchor: expected 1, found {text.count(buy_cb_old)}")
+    text = text.replace(buy_cb_old, buy_cb_new, 1)
+
+    # 6.1) shop_item 的 originPrice 分支对缺失节点做空值保护
+    origin_old = '''if (e.originPrice) {
+u.y = -7;
+f.y = -7;
+d.y = -7;
+y.y = -7;
+p.active = !0;
+p.getComponent(cc.Label).string = l.default.strfmt(getText("shop_item_1"), e.originPrice);
+h.active = !0;
+} else {
+u.y = 0;
+f.y = 0;
+y.y = 0;
+if (d) {
+d.y = 0;
+p.active = !1;
+h.active = !1;
+}
+}'''
+    origin_new = '''if (e.originPrice) {
+u.y = -7;
+f.y = -7;
+if (d) d.y = -7;
+y.y = -7;
+if (p) {
+p.active = !0;
+p.getComponent(cc.Label).string = l.default.strfmt(getText("shop_item_1"), e.originPrice);
+}
+if (h) h.active = !0;
+} else {
+u.y = 0;
+f.y = 0;
+y.y = 0;
+if (d) d.y = 0;
+if (p) p.active = !1;
+if (h) h.active = !1;
+}'''
+    if text.count(origin_old) != 1:
+        sys.exit(f"shop_item originPrice anchor: expected 1, found {text.count(origin_old)}")
+    text = text.replace(origin_old, origin_new, 1)
+
+    # 7) 人民币礼包弹窗直接 toast
     start = text.find("e.showAppBuySpecialStatusDialog = function(t, n, o, i, r) {")
     end = text.find("e.friendIsAdd = function(e) {", start)
     if start < 0 or end < 0:
@@ -98,6 +261,7 @@ return 1;
 '''
     text = text[:start] + stub + text[end:]
 
+    text += SHOP_DAILY_JS
     open(out, "w", encoding="utf-8").write(text)
     print(f"shop trimmed: {src} -> {out}")
 
