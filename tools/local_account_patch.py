@@ -9,7 +9,7 @@
   5. 启动参数 launchOption 缺失时给默认值，避免 p.query 崩溃。
   6. HttpRequest.load()：拦截 getUserInfoByAdditionalOrder / getAttrInfo，返回本地空数据。
 
-本地账号固定 gid=10001，昵称“本地玩家”，已实名/成年（跳过防沉迷校验）。
+本地账号固定 gid=10001，昵称“调查员A”，已实名/成年（跳过防沉迷校验）。
 不做：不伪造剧情/任务等其它业务协议（后续需要再补）。
 
 用法：tools/local_account_patch.py <decrypted-project.js> <output.js>
@@ -57,7 +57,7 @@ tasklist: [],
 canUseGacha: !1,
 fiveAttrLvMap: {},
 userInfo: {
-nickName: "本地玩家",
+nickName: "调查员A",
 avatar: "",
 electricity: 10000,
 electricity_time: 0,

@@ -22,8 +22,15 @@ try { InfoType = window.__require("InfoType").default; } catch (e) {}
 function customName() {
 try { return cc.sys.localStorage.getItem("daju_profile_name") || LS.getSnsUserName(); } catch (e) { return LS.getSnsUserName(); }
 }
+function defaultHead() {
+try {
+var npcConfig = App.ConfigManager.getConfig("npcInfo");
+var npc = npcConfig && npcConfig[20000001];
+return npc && npc.headId ? "headImg_" + npc.headId : "";
+} catch (e) { return ""; }
+}
 function customHead() {
-try { return cc.sys.localStorage.getItem("daju_profile_head") || ""; } catch (e) { return ""; }
+try { return cc.sys.localStorage.getItem("daju_profile_head") || defaultHead(); } catch (e) { return defaultHead(); }
 }
 
 var origPlayerName = Common.getPlayerName;
