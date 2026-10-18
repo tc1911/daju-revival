@@ -264,6 +264,46 @@ saveState();
 """
 
 
+BAG_FUNCS = '''
+t.prototype._loadLocalBag = function() {
+try {
+var raw = cc.sys.localStorage.getItem("daju_bag_items");
+if (raw) {
+var data = JSON.parse(raw);
+if (data && data.itemList) {
+this._itemList = {};
+for (var k in data.itemList) {
+var it = data.itemList[k];
+if (it && null != it.id) this._itemList[it.id] = { id: Number(it.id), count: Number(it.count) || 0 };
+}
+}
+if (data && null != data.powerBank) this._powerBank = data.powerBank;
+if (data && null != data.alarmClock) this._alarmClock = data.alarmClock;
+if (data && null != data.coffee) this._coffee = data.coffee;
+}
+} catch (e) {}
+this._bagLoaded = !0;
+};
+t.prototype._saveLocalBag = function() {
+if (!this._bagLoaded) return;
+try {
+var items = {};
+for (var k in this._itemList) {
+var it = this._itemList[k];
+if (it && null != it.id) items[it.id] = { id: Number(it.id), count: it.count };
+}
+cc.sys.localStorage.setItem("daju_bag_items", JSON.stringify({
+itemList: items,
+powerBank: this._powerBank,
+alarmClock: this._alarmClock,
+coffee: this._coffee
+}));
+} catch (e) {}
+};
+'''
+
+
+
 def main() -> None:
     if len(sys.argv) != 3:
         sys.exit("usage: tools/settings_cleanup_patch.py <in.js> <out.js>")
@@ -325,6 +365,47 @@ if (!(t && this._electricity >= 1e4)) {"""
     if text.count(BATT_OLD) != 1:
         sys.exit(f"battery refresh anchor: expected 1, found {text.count(BATT_OLD)}")
     text = text.replace(BATT_OLD, BATT_NEW)
+
+    # 背包/道具持久化：_itemList 和三种特殊道具计数写 LocalStorage，setData 时恢复。
+    BAG_METHOD_ANCHOR = "t.prototype.getItemCount = function(e) {"
+    if text.count(BAG_METHOD_ANCHOR) != 1:
+        sys.exit(f"bag method anchor: {text.count(BAG_METHOD_ANCHOR)}")
+    text = text.replace(BAG_METHOD_ANCHOR, BAG_FUNCS + BAG_METHOD_ANCHOR, 1)
+
+    ITEMLIST_ANCHOR = "void 0 != e.itemList && (this._itemList = e.itemList);"
+    if text.count(ITEMLIST_ANCHOR) != 1:
+        sys.exit(f"bag itemList anchor: {text.count(ITEMLIST_ANCHOR)}")
+    text = text.replace(ITEMLIST_ANCHOR, ITEMLIST_ANCHOR + "\nthis._loadLocalBag();", 1)
+
+    ADDEND_ANCHOR = """n || (this._itemList[e] = {
+id: Number(e),
+count: t
+});
+}
+};"""
+    if text.count(ADDEND_ANCHOR) != 1:
+        sys.exit(f"bag add end anchor: {text.count(ADDEND_ANCHOR)}")
+    text = text.replace(ADDEND_ANCHOR, """n || (this._itemList[e] = {
+id: Number(e),
+count: t
+});
+}
+this._saveLocalBag();
+};""", 1)
+
+    CONSUMEEND_ANCHOR = """}
+c.default.EventManager.fire(l.EventItemRefresh.goodsChange);
+c.default.EventManager.fire(l.EventName.refreshShop);
+};
+t.prototype.setData"""
+    if text.count(CONSUMEEND_ANCHOR) != 1:
+        sys.exit(f"bag consume end anchor: {text.count(CONSUMEEND_ANCHOR)}")
+    text = text.replace(CONSUMEEND_ANCHOR, """}
+this._saveLocalBag();
+c.default.EventManager.fire(l.EventItemRefresh.goodsChange);
+c.default.EventManager.fire(l.EventName.refreshShop);
+};
+t.prototype.setData""", 1)
 
     text += ABOUT_JS
     text += BACK_JS
