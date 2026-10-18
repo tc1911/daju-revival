@@ -163,6 +163,55 @@ return;
 var e = this;
 if (0 != cc.sys.getNetworkType()) t(); else {'''
 
+EXTRA_OLD = """t.prototype.setBoughtExtraList = function(e) {
+this._boughtExtraList = e;
+};
+t.prototype.addBoughtExtraList = function(e) {
+this._boughtExtraList.push(e);
+};
+t.prototype.isBoughtExtraList = function(e) {
+return this._boughtExtraList.indexOf(e) >= 0;
+};"""
+
+EXTRA_NEW = """t.prototype._loadBoughtExtraList = function() {
+if (this._boughtExtraLoaded) return;
+this._boughtExtraLoaded = !0;
+try {
+var s = cc.sys.localStorage.getItem("daju_bought_extra_list");
+if (s) {
+var a = JSON.parse(s);
+if (a && a.length) for (var i = 0; i < a.length; i++) {
+var v = Number(a[i]);
+if (this._boughtExtraList.indexOf(v) < 0) this._boughtExtraList.push(v);
+}
+}
+} catch (e) {}
+};
+t.prototype._saveBoughtExtraList = function() {
+try {
+cc.sys.localStorage.setItem("daju_bought_extra_list", JSON.stringify(this._boughtExtraList));
+} catch (e) {}
+};
+t.prototype.setBoughtExtraList = function(e) {
+this._loadBoughtExtraList();
+var a = Array.isArray(e) ? e : [];
+for (var i = 0; i < a.length; i++) {
+var v = Number(a[i]);
+if (this._boughtExtraList.indexOf(v) < 0) this._boughtExtraList.push(v);
+}
+this._saveBoughtExtraList();
+};
+t.prototype.addBoughtExtraList = function(e) {
+this._loadBoughtExtraList();
+var v = Number(e);
+if (this._boughtExtraList.indexOf(v) < 0) this._boughtExtraList.push(v);
+this._saveBoughtExtraList();
+};
+t.prototype.isBoughtExtraList = function(e) {
+this._loadBoughtExtraList();
+return this._boughtExtraList.indexOf(Number(e)) >= 0;
+};"""
+
 PATCHES = [
     ("getLoginSNS", OLD_SNS, NEW_SNS),
     ("getChannelNameSNS", OLD_CHANNEL, NEW_CHANNEL),
@@ -170,6 +219,7 @@ PATCHES = [
     ("chatStorage early return", OLD_EARLY, NEW_EARLY),
     ("launchOption", OLD_LAUNCH, NEW_LAUNCH),
     ("HttpRequest.load", OLD_LOAD, NEW_LOAD),
+    ("chatStorage boughtExtraList", EXTRA_OLD, EXTRA_NEW),
 ]
 
 
