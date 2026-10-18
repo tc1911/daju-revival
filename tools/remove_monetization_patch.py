@@ -98,6 +98,20 @@ showArrow: !0
         sys.exit(f"patch feedback entry: expected 1 match, found {text.count(old_feedback)}")
     text = text.replace(old_feedback, "")
 
+    # “我”页成就列表：去掉“累计看广告充电次数”(60000005) 与“累计充值”(60000006)。
+    ach_old = "for (o in n) {\ni = n[o];\nt.push({"
+    ach_new = "for (o in n) {\ni = n[o];\nif (\"60000005\" == i.serverId || \"60000006\" == i.serverId) continue;\nt.push({"
+    if text.count(ach_old) != 1:
+        sys.exit(f"achievement list anchor: expected 1, found {text.count(ach_old)}")
+    text = text.replace(ach_old, ach_new, 1)
+
+    # “我”页底部的账号绑定 / 登出账号：整块不执行。
+    bottom_old = 'if (c.default.Platform.isNative()) {\nif ("mock" == m.default.getLoginSNS()) {'
+    bottom_new = 'if (!1) {\nif ("mock" == m.default.getLoginSNS()) {'
+    if text.count(bottom_old) != 1:
+        sys.exit(f"userview bottom anchor: expected 1, found {text.count(bottom_old)}")
+    text = text.replace(bottom_old, bottom_new, 1)
+
     open(out, "w", encoding="utf-8").write(text)
     print(f"monetization removed: {src} -> {out}")
 
