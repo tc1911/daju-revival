@@ -163,6 +163,67 @@ return;
 var e = this;
 if (0 != cc.sys.getNetworkType()) t(); else {'''
 
+CONSUME_OLD = """t.prototype.consumeItemLocal = function(e, t) {
+if ("50000002" == e) {
+this._powerBank -= t;
+this._powerBank = Math.max(this._powerBank, 0);
+} else if ("50000003" == e) {
+this._alarmClock -= t;
+this._alarmClock = Math.max(this._alarmClock, 0);
+} else if ("50000005" == e) {
+this._coffee -= t;
+this._coffee = Math.max(this._coffee, 0);
+} else {
+this._itemList[e].count -= t;
+this._itemList[e].count = Math.max(this._itemList[e].count, 0);
+}
+c.default.EventManager.fire(l.EventItemRefresh.goodsChange);
+c.default.EventManager.fire(l.EventName.refreshShop);
+};"""
+
+CONSUME_NEW = """t.prototype.consumeItemLocal = function(e, t) {
+var id = Number(e);
+if (50000002 == id) {
+this._powerBank -= t;
+this._powerBank = Math.max(this._powerBank, 0);
+} else if (50000003 == id) {
+this._alarmClock -= t;
+this._alarmClock = Math.max(this._alarmClock, 0);
+} else if (50000005 == id) {
+this._coffee -= t;
+this._coffee = Math.max(this._coffee, 0);
+} else {
+var found = null;
+for (var k in this._itemList) {
+var it = this._itemList[k];
+if (it && Number(it.id) == id) {
+found = it;
+break;
+}
+}
+if (found) found.count = Math.max(0, Number(found.count) - t);
+else console.log("consumeItemLocal missing item", id, JSON.stringify(this._itemList));
+}
+c.default.EventManager.fire(l.EventItemRefresh.goodsChange);
+c.default.EventManager.fire(l.EventName.refreshShop);
+};"""
+
+TICKET_CONSUME_OLD = """h.default.Instance.addBoughtExtraList(Number(n.serverId));
+t.getChildByName("get_node").active = !0;
+t.getChildByName("cost_node").active = !1;
+p.default.Instance.dcUnlockExtra_101(n.serverId, "1", n.tickets);
+a.default.userInfo().consumeItemLocal(a.ItemType.ticket, n.tickets);"""
+
+TICKET_CONSUME_NEW = """h.default.Instance.addBoughtExtraList(Number(n.serverId));
+try {
+a.default.userInfo().consumeItemLocal(a.ItemType.ticket, n.tickets);
+} catch (err) {
+console.log("extra ticket consume failed", err);
+}
+t.getChildByName("get_node").active = !0;
+t.getChildByName("cost_node").active = !1;
+p.default.Instance.dcUnlockExtra_101(n.serverId, "1", n.tickets);"""
+
 EXTRA_OLD = """t.prototype.setBoughtExtraList = function(e) {
 this._boughtExtraList = e;
 };
@@ -220,6 +281,8 @@ PATCHES = [
     ("launchOption", OLD_LAUNCH, NEW_LAUNCH),
     ("HttpRequest.load", OLD_LOAD, NEW_LOAD),
     ("chatStorage boughtExtraList", EXTRA_OLD, EXTRA_NEW),
+    ("UserInfo.consumeItemLocal", CONSUME_OLD, CONSUME_NEW),
+    ("hidden story ticket consume", TICKET_CONSUME_OLD, TICKET_CONSUME_NEW),
 ]
 
 
