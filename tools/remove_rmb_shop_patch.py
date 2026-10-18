@@ -108,11 +108,15 @@ var __n = cc.instantiate(this.shopItem1.node);
 __n.name = "shopItem3";
 __si.addChild(__n);
 this.shopItem3 = __n.getComponent("shop_item");
-this.shopItem1.node.setPosition(0, -136);
-this.shopItem2.node.setPosition(0, -225);
-this.shopItem3.node.setPosition(0, -314);
+this.shopItem1.node.setPosition(0, -162.5);
+this.shopItem2.node.setPosition(0, -251.5);
+this.shopItem3.node.setPosition(0, -340.5);
 var __kids = __si.children;
 for (var __i = 0; __i < __kids.length; __i++) {
+if (__kids[__i].name == "shop_lab_001" && Math.abs(__kids[__i].y + 98) < 8) {
+__kids[__i].active = true;
+__kids[__i].setPosition(-190, -98.295);
+}
 if (__kids[__i].name == "shop_lab_001" && Math.abs(__kids[__i].y + 325) < 8) {
 __kids[__i].active = true;
 __kids[__i].setPosition(-190, -415);
@@ -123,7 +127,7 @@ __kids[__i].setPosition(0, -395);
 }
 }
 var __info = this.node.getChildByName("container").getChildByName("shopInfo");
-if (__info) __info.height = 820;
+if (__info) __info.height = 870;
 var __sv = this.node.getChildByName("container").getChildByName("ScrollView");
 if (__sv) {
 __sv.y = -80;
@@ -162,7 +166,7 @@ if (__dl > 0) {
 var __used = window.__dajuShopUsed ? window.__dajuShopUsed(e.serverId) : 0;
 var __left = Math.max(0, __dl - __used);
 this.maxCount = Math.min(this.maxCount, __left);
-this.buyCount = this.maxCount > 0 ? this.maxCount : 0;
+this.buyCount = this.maxCount > 0 ? 1 : 0;
 this.buyCnt.string = this.buyCount + "";
 this.totalCost.string = this.singlePrice * this.buyCount + "";
 this.reduce.interactable = this.buyCount > 1;

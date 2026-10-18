@@ -64,7 +64,7 @@ tools/build.py daily --out work/out/x.apk  # 覆盖输出
 nopay（merge + offline + local + monetization + album）
   → back（JS 返回键 + native smali，重编 dex）
   → daily（每日签到 + 资源 JSON）
-  → shop（3 个每日特价：2 礼物 + 1 功能，半价/限购3，弹窗默认一次买3）
+  → shop（3 个每日特价：2 礼物 + 1 功能，半价/限购3，弹窗默认1、最高3）
   → profile（资料/设置/图片 + main.js 清热更）
   → profile-native（ProfileBridge → classes3.dex）
 ```
