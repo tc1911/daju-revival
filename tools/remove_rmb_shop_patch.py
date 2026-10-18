@@ -82,7 +82,7 @@ var __specialIds = {};
 for (var __ei = 0; __ei < e.length; __ei++) __specialIds[String(e[__ei].serverId)] = 1;
 for (_ in m) {
 v = m[_];
-if (v && "cash" != v.currencyType && !__specialIds[String(v.serverId)]) t.push(v);
+if (v && v.onSale && "50100023" != v.serverId && "cash" != v.currencyType && !__specialIds[String(v.serverId)]) t.push(v);
 }'''
     if text.count(pool_old) != 1:
         sys.exit(f"shop daily pool anchor: expected 1, found {text.count(pool_old)}")
