@@ -48,7 +48,7 @@ export KS_PASS='<你的签名密码>'
 export KS_ALIAS=daju
 ```
 
-## 开源范围
+## 公开范围
 
 本仓库**不包含**：完整游戏 APK、解包后的 JS/资源、签名密钥、构建产物、中间产物。
 使用前需要自备官方 6.12 APK；签名 key 由使用者自己生成/保管。
@@ -81,6 +81,7 @@ adb install -r work/out/official-arm64-profile-native.apk
 compat/                   7 个 OPPO 6.12 arm64 兼容库 + 来源/校验和
 tools/                    解包/加密/打包/patch + pipeline.toml + build.py
 docs/                     修改列表、原版代码分析、代码文档、游戏代码文档
+LICENSE / NOTICE.md       非商用许可证与授权范围
 work/extracted/           解包现场（gitignore）
 work/build/               overlay（gitignore）
 work/out/                 成品 APK（gitignore）
@@ -96,5 +97,16 @@ work/keystore/           本地签名密钥（gitignore，不提交）
 | `docs/代码文档.md` | tools 逐文件实现、补丁锚点、引用矩阵 |
 | `docs/游戏代码文档.md` | 264 个游戏模块 + 331 个依赖模块 |
 | `docs/原版代码分析.md` | 原版机制、资源事实、踩坑 |
+
+## 许可证
+
+本仓库的原创代码、补丁、构建脚本与文档采用 **Daju Revival Non-Commercial License 1.0**：
+允许个人学习、研究、离线保存和修改，**禁止任何商业用途**。
+
+《橘猫侦探社》的游戏素材、原版游戏代码、APK 内的第三方内容以及 `compat/` 下的
+native 库**不在**本许可证授权范围内，权利归乐元素或各自权利人所有。
+
+详见 `LICENSE`（英文正文）、`LICENSE.zh-CN.md`（中文参考）和 `NOTICE.md`（范围说明）。
+如需商业授权，请通过 https://github.com/tc1911 联系。
 
 > 仅供个人研究与离线保存，本工程不分发游戏素材与原版代码。

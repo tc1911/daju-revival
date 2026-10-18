@@ -7,6 +7,7 @@ Android arm64 与桌面跑起来。
 - 底包路线：官方 6.12 + `compat/arm64-v8a/`（OPPO 6.12 的 7 个 arm64 库）；两包游戏内容逐字节相同，只差渠道外壳
 - 没有通用构建系统、测试套件、CI、包管理器；构建由 `tools/pipeline.toml` + `tools/build.py` 驱动
 - 原包在 `源文件/`，勿提交
+- 许可证：`LICENSE`（Daju Revival Non-Commercial License 1.0，禁止商用）；游戏素材/原版代码/`compat/` 不在授权范围内
 - 公开仓库不包含：完整 APK、解包 JS/资源、签名密钥、构建产物、中间产物；`compat/` 是唯一例外
 
 ## 术语陷阱
@@ -114,6 +115,7 @@ export KS_ALIAS=daju
 compat/                 7 个 OPPO 6.12 arm64 兼容库（来源/校验和见 compat/README.md）
 tools/                  解包/加密/打包/patch + pipeline.toml + build.py
 docs/                   修改列表、原版代码分析、代码文档、游戏代码文档
+LICENSE / NOTICE.md     非商用许可证与授权范围
 work/extracted/         解包现场（gitignore；oppo/assets/src-js = 解密后 JS）
 work/build/             overlay（gitignore）
 work/out/               成品 APK（gitignore）
