@@ -88,6 +88,36 @@ var tl = title.addComponent(cc.Label);
 tl.string = "关于";
 tl.fontSize = 34;
 title.color = cc.color(70, 55, 40);
+
+var addLine = function(text, size, y) {
+var n = new cc.Node("aboutLine");
+root.addChild(n);
+n.setPosition(0, y);
+var l = n.addComponent(cc.Label);
+l.string = text;
+l.fontSize = size;
+l.lineHeight = Math.round(size * 1.4);
+l.horizontalAlign = 1;
+l.enableWrapText = false;
+try { l.overflow = cc.Label.Overflow.NONE; } catch (e) {}
+n.color = cc.color(70, 55, 40);
+};
+
+var y = cc.winSize.height / 2 - 170;
+addLine("《橘猫侦探社》离线复刻版", 26, y); y -= 46;
+addLine("版本 6.12 · versionCode 12", 20, y); y -= 40;
+addLine("Android arm64 离线版", 18, y); y -= 42;
+addLine("—— 制作与修改 ——", 18, y); y -= 36;
+addLine("daju-revival 项目", 20, y); y -= 38;
+addLine("逆向开发者：tc1911", 20, y); y -= 34;
+addLine("仓库：https://github.com/tc1911/daju-revival", 16, y); y -= 34;
+addLine("GitHub：https://github.com/tc1911", 16, y); y -= 38;
+addLine("AI 助手：大肥鱼", 20, y); y -= 44;
+addLine("—— 版权与免责声明 ——", 18, y); y -= 36;
+addLine("原作与素材版权归 乐元素（Happy Elements）所有。", 18, y); y -= 34;
+addLine("本工程仅供个人研究与离线保存，", 18, y); y -= 30;
+addLine("不分发游戏素材与原版代码，与乐元素无关。", 18, y);
+
 var back = new cc.Node("back");
 root.addChild(back);
 back.setPosition(-cc.winSize.width / 2 + 60, cc.winSize.height / 2 - 90);
