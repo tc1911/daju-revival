@@ -4,7 +4,7 @@
 - ShopUI.getUserInfo：过滤 specialItemList/soulItemList 中 currencyType == "cash"
   的商品（这些来自 product_allplatform，是真实货币内购）。
 - Common.showAppBuySpecialStatusDialog：人民币礼包弹窗置为 toast + return 1。
-- ShopUI.refreshView：隐藏人民币余额；特惠位为空时隐藏，避免 [0]/[1] 越界。
+- ShopUI.refreshView：特惠位为空时隐藏，避免 [0]/[1] 越界；余额数显不动。
 - ShopUI.refreshItem：只刷新仍在显示的特惠位。
 - ShopUI.onClickButton：返回不再触发“人民币不足”礼包弹窗。
 - 不拦截 ShopUI，商城主界面继续可用。
@@ -38,10 +38,7 @@ this.shopItem2.refreshItem(this.specialItemList[1], this.buyItemId);'''
 this.shopItem1.node.active = !!s1;
 this.shopItem2.node.active = !!s2;
 if (s1) this.shopItem1.refreshItem(s1, this.buyItemId);
-if (s2) this.shopItem2.refreshItem(s2, this.buyItemId);
-this.rmbCount.node.active = !1;
-var addBtn = cc.find("container/shopInfo/btn_add", this.node);
-if (addBtn) addBtn.active = !1;'''
+if (s2) this.shopItem2.refreshItem(s2, this.buyItemId);'''
     if text.count(refresh_old) != 1:
         sys.exit(f"shop refreshView anchor: expected 1, found {text.count(refresh_old)}")
     text = text.replace(refresh_old, refresh_new)
