@@ -106,14 +106,24 @@ this.shopItem2.refreshItem(this.specialItemList[1], this.buyItemId);'''
 var __si = this.shopItem1.node.parent;
 var __n = cc.instantiate(this.shopItem1.node);
 __n.name = "shopItem3";
-__n.setPosition(0, -340.5);
 __si.addChild(__n);
 this.shopItem3 = __n.getComponent("shop_item");
+this.shopItem1.node.setPosition(0, -136);
+this.shopItem2.node.setPosition(0, -225);
+this.shopItem3.node.setPosition(0, -314);
 var __kids = __si.children;
 for (var __i = 0; __i < __kids.length; __i++) {
-if (__kids[__i].name == "shop_lab_001" && Math.abs(__kids[__i].y + 325) < 8) __kids[__i].active = false;
-if (__kids[__i].name == "line_4") __kids[__i].active = false;
+if (__kids[__i].name == "shop_lab_001" && Math.abs(__kids[__i].y + 325) < 8) {
+__kids[__i].active = true;
+__kids[__i].setPosition(-190, -385);
 }
+if (__kids[__i].name == "line_4") {
+__kids[__i].active = true;
+__kids[__i].setPosition(0, -365);
+}
+}
+var __info = this.node.getChildByName("container").getChildByName("shopInfo");
+if (__info) __info.height = 820;
 var __sv = this.node.getChildByName("container").getChildByName("ScrollView");
 if (__sv) {
 __sv.y = -20;
@@ -122,7 +132,14 @@ var __view = __sv.getChildByName("view");
 if (__view) __view.height = 400;
 }
 }
-var s1 = this.specialItemList[0], s2 = this.specialItemList[1], s3 = this.specialItemList[2];
+var __filtered = [];
+for (var __fj = 0; __fj < this.specialItemList.length; __fj++) {
+var __fq = this.specialItemList[__fj];
+var __fdl = Number(__fq.dailyLimit || 0);
+if (__fdl > 0 && (window.__dajuShopUsed ? window.__dajuShopUsed(__fq.serverId) : 0) >= __fdl) continue;
+__filtered.push(__fq);
+}
+var s1 = __filtered[0], s2 = __filtered[1], s3 = __filtered[2];
 this.shopItem1.node.active = !!s1;
 this.shopItem2.node.active = !!s2;
 this.shopItem3.node.active = !!s3;
@@ -132,6 +149,43 @@ if (s3) this.shopItem3.refreshItem(s3, this.buyItemId);'''
     if text.count(refresh_old) != 1:
         sys.exit(f"shop refreshView anchor: expected 1, found {text.count(refresh_old)}")
     text = text.replace(refresh_old, refresh_new)
+
+    # 2.1) ShopSell.show：特价商品按剩余数量默认选中，最大一次买 3
+    show_old = """this.maxCount = Math.floor(r.default.userInfo().getItemCount(e.currencyType) / this.singlePrice);
+"50100023" == e.serverId && (this.maxCount = 1);
+this.buyCount >= this.maxCount ? this.add.interactable = !1 : this.add.interactable = !0;
+};"""
+    show_new = """this.maxCount = Math.floor(r.default.userInfo().getItemCount(e.currencyType) / this.singlePrice);
+"50100023" == e.serverId && (this.maxCount = 1);
+var __dl = Number(e.dailyLimit || 0);
+if (__dl > 0) {
+var __used = window.__dajuShopUsed ? window.__dajuShopUsed(e.serverId) : 0;
+var __left = Math.max(0, __dl - __used);
+this.maxCount = Math.min(this.maxCount, __left);
+this.buyCount = this.maxCount > 0 ? this.maxCount : 0;
+this.buyCnt.string = this.buyCount + "";
+this.totalCost.string = this.singlePrice * this.buyCount + "";
+this.reduce.interactable = this.buyCount > 1;
+this.add.interactable = this.buyCount > 0 && this.buyCount < this.maxCount;
+if (__left <= 0) this.item_dec.string = (e.description || "") + "（今日已售罄）";
+} else {
+this.buyCount >= this.maxCount ? this.add.interactable = !1 : this.add.interactable = !0;
+}
+};"""
+    if text.count(show_old) != 1:
+        sys.exit(f"shop sell show anchor: expected 1, found {text.count(show_old)}")
+    text = text.replace(show_old, show_new, 1)
+
+    cnt_old = """this.buyCount = t > 0 ? this.buyCount + 1 : this.buyCount - 1;
+this.buyCount = Math.max(1, Math.min(this.maxCount, this.buyCount));
+this.buyCount <= 1 ? this.reduce.interactable = !1 : this.reduce.interactable = !0;"""
+    cnt_new = """this.buyCount = t > 0 ? this.buyCount + 1 : this.buyCount - 1;
+var __min = this.maxCount > 0 ? 1 : 0;
+this.buyCount = Math.max(__min, Math.min(this.maxCount, this.buyCount));
+this.buyCount <= __min ? this.reduce.interactable = !1 : this.reduce.interactable = !0;"""
+    if text.count(cnt_old) != 1:
+        sys.exit(f"shop sell changeCnt anchor: expected 1, found {text.count(cnt_old)}")
+    text = text.replace(cnt_old, cnt_new, 1)
 
     # 3) 隐藏后不再刷新特惠位
     item_old = '''this.shopItem1.refreshLabel();
@@ -181,19 +235,7 @@ var e = this;
 if (r.default.canClick()) if (r.default.userInfo().getItemCount(this.itemInfo.currencyType) < this.buyCount * this.singlePrice) {'''
     buy_new = '''t.prototype.buyItem = function() {
 var e = this;
-var __dl = Number(this.itemInfo && this.itemInfo.dailyLimit || 0);
-if (__dl > 0) {
-var __used = window.__dajuShopUsed ? window.__dajuShopUsed(this.itemInfo.serverId) : 0;
-var __left = __dl - __used;
-if (__left <= 0) {
-r.default.showToast("今日已限购 " + __dl + " 个");
-return;
-}
-if (this.buyCount > __left) {
-r.default.showToast("今日最多还能购买 " + __left + " 个");
-return;
-}
-}
+if (this.maxCount <= 0) return;
 if (r.default.canClick()) if (r.default.userInfo().getItemCount(this.itemInfo.currencyType) < this.buyCount * this.singlePrice) {'''
     if text.count(buy_old) != 1:
         sys.exit(f"shop sell guard anchor: expected 1, found {text.count(buy_old)}")
