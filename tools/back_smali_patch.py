@@ -76,6 +76,20 @@ def main() -> None:
     text = text.replace(old_super, new_back)
 
     open(app, "w", encoding="utf-8").write(text)
+
+    # 退出确认回调原本会再调一次 onBackPressed()；返回键已改为转发 JS，
+    # 继续调会重新弹 ExitGameDialog，形成“点确定反复弹窗”。
+    # 这里改成直接 finish()。
+    app3_path = os.path.join(root, "org/cocos2dx/javascript/AppActivity$3.smali")
+    app3 = open(app3_path, encoding="utf-8").read()
+    old_exit_back = "invoke-virtual {p1}, Lorg/cocos2dx/javascript/AppActivity;->onBackPressed()V"
+    new_finish = "invoke-virtual {p1}, Lorg/cocos2dx/javascript/AppActivity;->finish()V"
+    if app3.count(old_exit_back) == 1:
+        app3 = app3.replace(old_exit_back, new_finish)
+        open(app3_path, "w", encoding="utf-8").write(app3)
+    elif app3.count(new_finish) != 1:
+        sys.exit(f"AppActivity$3 exit callback: unexpected state")
+
     open(os.path.join(root, "org/cocos2dx/javascript/AndroidBackBridge.smali"), "w", encoding="utf-8").write(BRIDGE)
     open(os.path.join(root, "org/cocos2dx/javascript/AndroidBackBridge$1.smali"), "w", encoding="utf-8").write(BRIDGE1)
     print(f"back smali patched: {app}")
