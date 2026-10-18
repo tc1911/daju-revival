@@ -7,6 +7,8 @@
 - ShopUI.refreshView：特惠位为空时隐藏，避免 [0]/[1] 越界；余额数显不动。
 - ShopUI.refreshItem：只刷新仍在显示的特惠位。
 - ShopUI.onClickButton：返回不再触发“人民币不足”礼包弹窗。
+- ShopUI.didOpen：隐藏娃娃机入口（gochaRed 的父节点 gacha）；
+  这是旧广告营销抽奖入口，剥离广告 SDK 后没有意义。
 - 不拦截 ShopUI，商城主界面继续可用。
 """
 import sys
@@ -71,7 +73,20 @@ break;'''
         sys.exit(f"shop back anchor: expected 1, found {text.count(back_old)}")
     text = text.replace(back_old, back_new)
 
-    # 5) 人民币礼包弹窗直接 toast
+    # 5) 隐藏娃娃机入口：gochaRed 是 gacha 节点下的红点，直接隐藏父节点
+    gacha_old = 'u.default.userInfo().canUseGacha ? this.gochaRed.active = !0 : this.gochaRed.active = !1;'
+    gacha_new = 'this.gochaRed && this.gochaRed.parent && (this.gochaRed.parent.active = !1);'
+    if text.count(gacha_old) != 1:
+        sys.exit(f"shop gacha anchor: expected 1, found {text.count(gacha_old)}")
+    text = text.replace(gacha_old, gacha_new, 1)
+
+    gacha_cb_old = 'u.default.userInfo().canUseGacha ? e.gochaRed.active = !0 : e.gochaRed.active = !1;'
+    gacha_cb_new = 'e.gochaRed && e.gochaRed.parent && (e.gochaRed.parent.active = !1);'
+    if text.count(gacha_cb_old) != 1:
+        sys.exit(f"shop gacha callback anchor: expected 1, found {text.count(gacha_cb_old)}")
+    text = text.replace(gacha_cb_old, gacha_cb_new, 1)
+
+    # 6) 人民币礼包弹窗直接 toast
     start = text.find("e.showAppBuySpecialStatusDialog = function(t, n, o, i, r) {")
     end = text.find("e.friendIsAdd = function(e) {", start)
     if start < 0 or end < 0:
