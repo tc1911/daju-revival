@@ -105,6 +105,29 @@ return [ 2 ];''', 1)
         sys.exit(f"bag power bank addElectricity: expected 1, found {text.count(old_bag)}")
     text = text.replace(old_bag, "t.addItemCountLocal(u.ItemType.gold, 5000);")
 
+    ach_old = """} else r.default.Http.request("getTaskReward", {
+type: 2,
+taskId: this._data.achieveId
+}, function(e) {
+if (e.rewards && e.rewards.length > 0) {
+var n = getText("user_list_item_6");
+"60000006" == t._data.achieveId && 50001001 == e.rewards[0].itemId && (n = "您已无需永恒电池组件，转换为以下商品");
+a.default.userInfo().getRewards(e.rewards, n, "achievement");
+a.default.userInfo().addItemCountLocal(t._data.achieveId, 1);
+}
+});"""
+    ach_new = """} else {
+var localReward = n ? [ { itemId: n.itemID, num: n.itemCount || 1 } ] : [];
+if (localReward.length > 0) {
+var rewardTitle = getText("user_list_item_6");
+a.default.userInfo().getRewards(localReward, rewardTitle, "achievement");
+a.default.userInfo().addItemCountLocal(this._data.achieveId, 1);
+}
+}"""
+    if text.count(ach_old) != 1:
+        sys.exit(f"achievement claim anchor: expected 1, found {text.count(ach_old)}")
+    text = text.replace(ach_old, ach_new, 1)
+
     old_top = 'this.taskNode.getChildByName("common_prop_bg_6").off(cc.Node.EventType.TOUCH_END);'
     if text.count(old_top) != 1:
         sys.exit(f"daily top icon anchor: expected 1, found {text.count(old_top)}")

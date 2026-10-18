@@ -130,6 +130,17 @@ server_time: Math.floor(Date.now() / 1e3)
 });
 return;
 }
+if ("buyItemV2" == this.method || "buyItem" == this.method) {
+this.handler.onResponseInfoSuccess({
+retCode: 200,
+msgCode: 1,
+rewards: [],
+itemList: [],
+items: [],
+server_time: Math.floor(Date.now() / 1e3)
+});
+return;
+}
 if ("costElectricityV2" == this.method) {
 this.handler.onResponseInfoSuccess({
 retCode: 200,
