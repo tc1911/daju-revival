@@ -130,10 +130,16 @@ var __info = this.node.getChildByName("container").getChildByName("shopInfo");
 if (__info) __info.height = 870;
 var __sv = this.node.getChildByName("container").getChildByName("ScrollView");
 if (__sv) {
-__sv.y = -80;
+__sv.y = -40;
 __sv.height = 400;
 var __view = __sv.getChildByName("view");
 if (__view) __view.height = 400;
+var __scroll = __sv.getComponent(cc.ScrollView);
+if (__scroll && __scroll.scrollToTop) {
+this.scheduleOnce(function() {
+__scroll.scrollToTop(0);
+}, 0);
+}
 }
 }
 var __filtered = [];
