@@ -120,42 +120,78 @@ __kids[__i].setPosition(-190, -98.295);
 if (__kids[__i].name == "shop_lab_001" && Math.abs(__kids[__i].y + 325) < 8) {
 __kids[__i].active = true;
 __kids[__i].setPosition(-190, -415);
+this.__dajuHotTitle = __kids[__i];
 }
 if (__kids[__i].name == "line_4") {
 __kids[__i].active = true;
 __kids[__i].setPosition(0, -395);
+this.__dajuHotLine = __kids[__i];
 }
 }
 var __info = this.node.getChildByName("container").getChildByName("shopInfo");
 if (__info) __info.height = 870;
 var __sv = this.node.getChildByName("container").getChildByName("ScrollView");
 if (__sv) {
+this.__dajuScroll = __sv;
 __sv.y = -40;
 __sv.height = 400;
 var __view = __sv.getChildByName("view");
 if (__view) __view.height = 400;
-var __scroll = __sv.getComponent(cc.ScrollView);
-if (__scroll && __scroll.scrollToTop) {
-this.scheduleOnce(function() {
-__scroll.scrollToTop(0);
-}, 0);
 }
 }
-}
-var __filtered = [];
-for (var __fj = 0; __fj < this.specialItemList.length; __fj++) {
-var __fq = this.specialItemList[__fj];
-var __fdl = Number(__fq.dailyLimit || 0);
-if (__fdl > 0 && (window.__dajuShopUsed ? window.__dajuShopUsed(__fq.serverId) : 0) >= __fdl) continue;
-__filtered.push(__fq);
-}
-var s1 = __filtered[0], s2 = __filtered[1], s3 = __filtered[2];
+var s1 = this.specialItemList[0], s2 = this.specialItemList[1], s3 = this.specialItemList[2];
 this.shopItem1.node.active = !!s1;
 this.shopItem2.node.active = !!s2;
 this.shopItem3.node.active = !!s3;
 if (s1) this.shopItem1.refreshItem(s1, this.buyItemId);
 if (s2) this.shopItem2.refreshItem(s2, this.buyItemId);
-if (s3) this.shopItem3.refreshItem(s3, this.buyItemId);'''
+if (s3) this.shopItem3.refreshItem(s3, this.buyItemId);
+var __markSold = function(item, comp) {
+if (!item || !comp) return;
+var __dl = Number(item.dailyLimit || 0);
+var __sold = __dl > 0 && (window.__dajuShopUsed ? window.__dajuShopUsed(item.serverId) : 0) >= __dl;
+comp.node.opacity = __sold ? 150 : 255;
+var __btn = null, __soldLbl = null;
+for (var __ci = 0; __ci < comp.node.children.length; __ci++) {
+var __ch = comp.node.children[__ci];
+if (__ch.name == "button") __btn = __ch;
+if (__ch.name == "__dajuSoldLbl") __soldLbl = __ch;
+}
+if (__btn) __btn.active = !__sold;
+if (!__soldLbl) {
+__soldLbl = new cc.Node("__dajuSoldLbl");
+__soldLbl.setContentSize(130, 70);
+__soldLbl.setPosition(200, 0);
+var __sl = __soldLbl.addComponent(cc.Label);
+__sl.string = "已售罄";
+__sl.fontSize = 26;
+__sl.lineHeight = 34;
+__sl.horizontalAlign = 1;
+__sl.verticalAlign = 1;
+comp.node.addChild(__soldLbl, 10);
+}
+__soldLbl.active = __sold;
+if (__soldLbl.active) {
+__soldLbl.opacity = 255;
+__soldLbl.color = cc.color(90, 90, 90);
+}
+};
+__markSold(s1, this.shopItem1);
+__markSold(s2, this.shopItem2);
+__markSold(s3, this.shopItem3);
+window.__dajuShopMarkSold = function() {
+__markSold(s1, this.shopItem1);
+__markSold(s2, this.shopItem2);
+__markSold(s3, this.shopItem3);
+}.bind(this);
+if (this.__dajuScroll) {
+var __scroll = this.__dajuScroll.getComponent(cc.ScrollView);
+if (__scroll && __scroll.scrollToTop) {
+this.scheduleOnce(function() {
+__scroll.scrollToTop(0);
+}, 0);
+}
+}'''
     if text.count(refresh_old) != 1:
         sys.exit(f"shop refreshView anchor: expected 1, found {text.count(refresh_old)}")
     text = text.replace(refresh_old, refresh_new)
@@ -255,6 +291,7 @@ if (r.default.canClick()) if (r.default.userInfo().getItemCount(this.itemInfo.cu
 "50100023" != e.itemInfo.serverId'''
     buy_cb_new = '''r.default.userInfo().buyItem(this.itemInfo.serverId, this.buyCount, this.itemInfo.currencyType, this.buyCount * this.singlePrice, function() {
 window.__dajuShopAdd && window.__dajuShopAdd(e.itemInfo.serverId, e.buyCount);
+window.__dajuShopMarkSold && window.__dajuShopMarkSold();
 "50100023" != e.itemInfo.serverId'''
     if text.count(buy_cb_old) != 1:
         sys.exit(f"shop sell callback anchor: expected 1, found {text.count(buy_cb_old)}")

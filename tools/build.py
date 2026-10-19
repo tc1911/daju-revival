@@ -346,6 +346,11 @@ def prepare_back(cfg: dict, overlay: Path, *, dry: bool, force_native: bool) -> 
     else:
         print(f"  已存在 smali 桥: {marker.relative_to(ROOT)}")
 
+    # apktool 会复用 full/build 里的旧 dex；清掉，避免 classes2.dex 少类
+    if not dry:
+        cache = full / "build"
+        if cache.exists():
+            shutil.rmtree(cache)
     run(["apktool", "b", "-p", frame, full, "-o", built], dry=dry)
 
     if dry:
