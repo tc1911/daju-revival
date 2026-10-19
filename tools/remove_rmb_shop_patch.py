@@ -133,10 +133,12 @@ if (__info) __info.height = 870;
 var __sv = this.node.getChildByName("container").getChildByName("ScrollView");
 if (__sv) {
 this.__dajuScroll = __sv;
-__sv.height = 440;
+var __wgt = __sv.getComponent(cc.Widget);
+if (__wgt) __wgt.enabled = !1;
 __sv.y = -40;
+__sv.height = 440 + Math.max(0, (cc.winSize.height - 960) * 0.5);
 var __view = __sv.getChildByName("view");
-if (__view) __view.height = 440;
+if (__view) __view.height = __sv.height;
 }
 }
 var s1 = this.specialItemList[0], s2 = this.specialItemList[1], s3 = this.specialItemList[2];
@@ -189,7 +191,7 @@ var __scroll = this.__dajuScroll.getComponent(cc.ScrollView);
 if (__scroll && __scroll.scrollToTop) {
 this.scheduleOnce(function() {
 __scroll.scrollToTop(0);
-}, 0);
+}, 1);
 }
 }'''
     if text.count(refresh_old) != 1:
