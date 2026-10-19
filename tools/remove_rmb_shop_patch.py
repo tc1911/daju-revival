@@ -133,10 +133,10 @@ if (__info) __info.height = 870;
 var __sv = this.node.getChildByName("container").getChildByName("ScrollView");
 if (__sv) {
 this.__dajuScroll = __sv;
+__sv.height = 620;
 __sv.y = -40;
-__sv.height = 400;
 var __view = __sv.getChildByName("view");
-if (__view) __view.height = 400;
+if (__view) __view.height = 620;
 }
 }
 var s1 = this.specialItemList[0], s2 = this.specialItemList[1], s3 = this.specialItemList[2];
