@@ -237,13 +237,14 @@ num: 10
 } ];
 }
 __pa.clgTimes = __dajuStageOf(__pt);
-console.log("DAJU_TRAIN_PASS", __pt, __pr, __padd, __pa.lv, __pa.exp, this.buildParams);
+var __ptime = Number(__pp.passTime) || 0;
+console.log("DAJU_TRAIN_PASS", __pt, __pr, __padd, __pa.lv, __pa.exp, __ptime, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
 rewards: __prewards,
 addExp: __padd,
 attrInfoBean: __pa,
-passTime: 0
+passTime: __ptime
 });
 return;
 }
@@ -426,6 +427,39 @@ this._loadBoughtExtraList();
 return this._boughtExtraList.indexOf(Number(e)) >= 0;
 };"""
 
+END_VIEW_OLD = """this.end.getChildByName("label4_e").getComponent(cc.Label).string = "s";
+}
+};"""
+END_VIEW_NEW = """this.end.getChildByName("label4_e").getComponent(cc.Label).string = "s";
+}
+var __dajuEnd = this.end;
+if (1 == h.AttrType[this.gameType]) {
+[ "label4", "pro4", "label4_e" ].forEach(function(n) {
+var x = __dajuEnd.getChildByName(n);
+if (x) x.active = !1;
+});
+} else {
+[ "label3", "pro3", "label3_e", "label4", "pro4", "label4_e" ].forEach(function(n) {
+var x = __dajuEnd.getChildByName(n);
+if (x) x.active = !1;
+});
+}
+};"""
+
+PASS_TIME_OLD = """l.default.Http.request("passLevel", {
+type: o,
+result: t,
+answers: e.answers,
+operations: e.operations
+}, function(r) {"""
+PASS_TIME_NEW = """l.default.Http.request("passLevel", {
+type: o,
+result: t,
+passTime: n.gameTime,
+answers: e.answers,
+operations: e.operations
+}, function(r) {"""
+
 STAGE_LABEL_OLD = """this.game.getChildByName("level").getComponent(cc.Label).string = m.default.strfmt("第{0}关", this.attriInfo.clgTimes + 1);"""
 STAGE_LABEL_NEW = """var __dajuStageIdx = e && "number" == typeof e.stageIndex ? e.stageIndex : this.attriInfo.clgTimes;
 this.game.getChildByName("level").getComponent(cc.Label).string = m.default.strfmt("第{0}关", __dajuStageIdx + 1);"""
@@ -530,6 +564,8 @@ PATCHES = [
     ("getLoginSNS", OLD_SNS, NEW_SNS),
     ("getChannelNameSNS", OLD_CHANNEL, NEW_CHANNEL),
     ("sendMessage", OLD_SEND, NEW_SEND),
+    ("training pass time", PASS_TIME_OLD, PASS_TIME_NEW),
+    ("training end stats", END_VIEW_OLD, END_VIEW_NEW),
     ("training stage label", STAGE_LABEL_OLD, STAGE_LABEL_NEW),
     ("chatStorage npc favors persistence", NPC_FAVOR_OLD, NPC_FAVOR_NEW),
     ("chatStorage early return", OLD_EARLY, NEW_EARLY),
