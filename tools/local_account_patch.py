@@ -270,9 +270,30 @@ attrInfoBean: __dajuGetAttr(1)
 return;
 }
 if ("buyClgTimes" == this.method) {
+var __bp2 = {};
+try {
+__bp2 = JSON.parse(this.buildParams)[1][0] || {};
+} catch (e) {}
+var __bt2 = Number(__bp2.type);
+if (!__bt2) {
+try {
+var __bm2 = /"type"\s*:\s*(\d+)/.exec(this.buildParams || "");
+if (__bm2) __bt2 = Number(__bm2[1]);
+} catch (e) {}
+}
+var __ba2 = __dajuGetAttr(__bt2);
+__ba2.dayBuyCnt = (__ba2.dayBuyCnt || 0) + 1;
+__dajuTrain[__bt2] = {
+lv: __ba2.lv,
+exp: __ba2.exp,
+dayUseCnt: __ba2.dayUseCnt,
+dayBuyCnt: __ba2.dayBuyCnt
+};
+__dajuSaveTrain();
+console.log("DAJU_TRAIN_BUY", __bt2, __ba2.dayBuyCnt, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
-attrInfoBean: __dajuGetAttr(1)
+attrInfoBean: __ba2
 });
 return;
 }
