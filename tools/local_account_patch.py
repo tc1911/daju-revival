@@ -230,10 +230,10 @@ dayBuyCnt: __pa.dayBuyCnt
 __dajuSaveTrain();
 __prewards = [ {
 itemId: 50001002,
-num: 500
+num: 10000
 }, {
 itemId: 50001001,
-num: 10
+num: 1000
 } ];
 }
 __pa.clgTimes = __dajuStageOf(__pt);

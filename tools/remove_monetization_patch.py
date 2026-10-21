@@ -4,7 +4,7 @@
 处理：
   1. MainView.addMoodLayer：保留 朋友圈、今日行程、商城、侦探训练营、案件记录、隐藏的故事；
      移除 7日福利(LoginBonus/签到)、睡前充电(ReserveRecharge)、
-     共享充电宝(FreeRecharge)、活动(Activity_coin)。侦探训练营保留。
+     共享充电宝(FreeRecharge)、活动(Activity_coin)。侦探训练营保留；freeRecharge 点击弹窗置空。
      商城本体由 remove_rmb_shop_patch.py 精简。
   2. UserInfo.popLogin：置空，关掉每日签到/7日福利弹窗。
 
@@ -85,6 +85,18 @@ def main() -> None:
     if start < 0 or end < 0:
         sys.exit("patch addMoodLayer: boundaries not found")
     text = text[:start] + NEW_MOOD + text[end:]
+
+    free_old = "t.prototype.freeRecharge = function() {\nreturn r(this, void 0, void 0, function() {"
+    free_new = "t.prototype.freeRecharge = function() {\nreturn;\n};\nt.prototype.__freeRechargeDisabled = function() {\nreturn r(this, void 0, void 0, function() {"
+    if text.count(free_old) != 1:
+        sys.exit("patch freeRecharge: expected 1 match, found %d" % text.count(free_old))
+    text = text.replace(free_old, free_new, 1)
+
+    alert_old = "e.showAlertDialog = function(t) {\nvar n = cc.winSize"
+    alert_new = "e.showAlertDialog = function(t) {\nif (t && t.label && 'string' == typeof t.label && (t.label.indexOf('睡前充电') >= 0 || t.label.indexOf('免费充电') >= 0)) {\nconsole.log('DAJU_SUPPRESS_CHARGE_DIALOG');\nreturn;\n}\nvar n = cc.winSize"
+    if text.count(alert_old) != 1:
+        sys.exit("patch showAlertDialog: expected 1 match, found %d" % text.count(alert_old))
+    text = text.replace(alert_old, alert_new, 1)
 
     start = text.find("t.prototype.popLogin = function() {")
     end = text.find("t.prototype.showTimeLimitPack = function(e, t, n) {", start)
