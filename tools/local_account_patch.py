@@ -109,14 +109,76 @@ var e = this;
 if (0 != cc.sys.getNetworkType()) t(); else {'''
 
 NEW_LOAD = '''e.prototype.load = function() {
+var __dajuAttr = function() {
+return {
+lv: 1,
+exp: 0,
+dayUseCnt: 0,
+clgTimes: 0,
+dayAddExp: 0,
+dayBuyCnt: 0,
+redBagNum: 0,
+redBagStartTime: 0,
+nextExp: 100,
+premaxExp: 100
+};
+};
+var __dajuAttrs = { 1: __dajuAttr(), 2: __dajuAttr(), 3: __dajuAttr(), 4: __dajuAttr(), 5: __dajuAttr() };
 if ("getUserInfoByAdditionalOrder" == this.method) {
 this.handler.onResponseInfoSuccess({});
 return;
 }
 if ("getAttrInfo" == this.method) {
 this.handler.onResponseInfoSuccess({
-fiveAttrInfos: [],
+fiveAttrInfos: __dajuAttrs,
 upgradeLv: 1
+});
+return;
+}
+if ("startLevel" == this.method) {
+var __p = {};
+try {
+__p = JSON.parse(this.buildParams)[1][0] || {};
+} catch (e) {}
+this.handler.onResponseInfoSuccess({
+msgCode: 1,
+stageList: [ 4 == Number(__p.type) ? 0 : 10000001 ]
+});
+return;
+}
+if ("passLevel" == this.method) {
+this.handler.onResponseInfoSuccess({
+msgCode: 1,
+rewards: [],
+addExp: 0,
+attrInfoBean: __dajuAttr(),
+passTime: 0
+});
+return;
+}
+if ("getRank" == this.method) {
+this.handler.onResponseInfoSuccess({
+monthStartTime: Date.now() - 86400000,
+monthEndTime: Date.now() + 86400000,
+score: 0,
+selfRank: 0,
+rankInfos: [],
+lastMonthRewards: [],
+lastMonthRank: 0
+});
+return;
+}
+if ("getRedBag" == this.method) {
+this.handler.onResponseInfoSuccess({
+rewards: [],
+attrInfoBean: __dajuAttr()
+});
+return;
+}
+if ("buyClgTimes" == this.method) {
+this.handler.onResponseInfoSuccess({
+msgCode: 1,
+attrInfoBean: __dajuAttr()
 });
 return;
 }
@@ -273,10 +335,107 @@ this._loadBoughtExtraList();
 return this._boughtExtraList.indexOf(Number(e)) >= 0;
 };"""
 
+NPC_FAVOR_OLD = """t.prototype.setNpcFavors = function(e) {
+this._npcFavors = e;
+};
+t.prototype.getNpcFavor = function(e) {
+var t = this._npcFavors[e];
+return t ? t.itemCnt : 0;
+};
+t.prototype.addNpcFavor = function(e, t, n) {
+var o = this._npcFavors[e];
+if (o) {
+o.itemCnt = o.itemCnt + t;
+n && o.giftIdList.push(n);
+} else {
+var i = {
+itemCnt: 0,
+giftIdList: []
+};
+i.itemCnt = t;
+n && (i.giftIdList = [ n ]);
+this._npcFavors[e] = i;
+}
+};
+t.prototype.getNpcGiftCnt = function(e) {
+var t = this._npcFavors[e];
+return t && t.giftIdList ? t.giftIdList.length : 0;
+};
+t.prototype.getNpcGiftItem = function(e, t) {
+var n = this._npcFavors[e];
+t = t || n.giftIdList.length;
+return n && n.giftIdList && n.giftIdList[t - 1] ? n.giftIdList[t - 1] : 50000101;
+};"""
+NPC_FAVOR_NEW = """t.prototype._loadNpcFavors = function() {
+if (this._npcFavorsLoaded) return;
+this._npcFavorsLoaded = !0;
+try {
+var s = cc.sys.localStorage.getItem("daju_npc_favors");
+if (s) {
+var o = JSON.parse(s);
+if (o && "object" == typeof o) {
+this._npcFavors = o;
+return;
+}
+}
+} catch (e) {}
+if (this._npcFavors instanceof Map) {
+var m = {};
+this._npcFavors.forEach(function(v, k) {
+m[k] = v;
+});
+this._npcFavors = m;
+}
+};
+t.prototype._saveNpcFavors = function() {
+try {
+cc.sys.localStorage.setItem("daju_npc_favors", JSON.stringify(this._npcFavors));
+} catch (e) {}
+};
+t.prototype.setNpcFavors = function(e) {
+this._npcFavors = e || {};
+this._saveNpcFavors();
+};
+t.prototype.getNpcFavor = function(e) {
+this._loadNpcFavors();
+var t = this._npcFavors[e];
+return t ? t.itemCnt : 0;
+};
+t.prototype.addNpcFavor = function(e, t, n) {
+this._loadNpcFavors();
+var o = this._npcFavors[e];
+if (o) {
+o.itemCnt = o.itemCnt + t;
+n && o.giftIdList.push(n);
+} else {
+var i = {
+itemCnt: 0,
+giftIdList: []
+};
+i.itemCnt = t;
+n && (i.giftIdList = [ n ]);
+this._npcFavors[e] = i;
+}
+this._saveNpcFavors();
+};
+t.prototype.getNpcGiftCnt = function(e) {
+this._loadNpcFavors();
+var t = this._npcFavors[e];
+return t && t.giftIdList ? t.giftIdList.length : 0;
+};
+t.prototype.getNpcGiftItem = function(e, t) {
+this._loadNpcFavors();
+var n = this._npcFavors[e];
+if (!n || !n.giftIdList) return 50000101;
+t = t || n.giftIdList.length;
+return n.giftIdList[t - 1] ? n.giftIdList[t - 1] : 50000101;
+};"""
+
 PATCHES = [
     ("getLoginSNS", OLD_SNS, NEW_SNS),
     ("getChannelNameSNS", OLD_CHANNEL, NEW_CHANNEL),
     ("sendMessage", OLD_SEND, NEW_SEND),
+    ("chatStorage npc favors persistence", NPC_FAVOR_OLD, NPC_FAVOR_NEW),
     ("chatStorage early return", OLD_EARLY, NEW_EARLY),
     ("launchOption", OLD_LAUNCH, NEW_LAUNCH),
     ("HttpRequest.load", OLD_LOAD, NEW_LOAD),

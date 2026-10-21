@@ -2,9 +2,9 @@
 """移除签到/充电/活动入口，保留商城。
 
 处理：
-  1. MainView.addMoodLayer：保留 朋友圈、今日行程、商城、案件记录、隐藏的故事；
+  1. MainView.addMoodLayer：保留 朋友圈、今日行程、商城、侦探训练营、案件记录、隐藏的故事；
      移除 7日福利(LoginBonus/签到)、睡前充电(ReserveRecharge)、
-     共享充电宝(FreeRecharge)、活动(Activity_coin)、侦探训练营(Peripheral)。
+     共享充电宝(FreeRecharge)、活动(Activity_coin)。侦探训练营保留。
      商城本体由 remove_rmb_shop_patch.py 精简。
   2. UserInfo.popLogin：置空，关掉每日签到/7日福利弹窗。
 
@@ -45,6 +45,14 @@ height: 90,
 id: p.contentItemType.bookMark,
 noLine: !0,
 icon: "icon_case",
+showArrow: !0
+});
+e.push({
+name: "侦探训练营",
+height: 90,
+id: p.contentItemType.Peripheral,
+noLine: !1,
+icon: "icon_train",
 showArrow: !0
 });
 e.push({
