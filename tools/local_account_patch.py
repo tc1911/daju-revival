@@ -120,13 +120,6 @@ i = Number(cc.sys.localStorage.getItem("daju_train_stage_" + t)) || 0;
 } catch (e) {}
 return i % m;
 };
-var __dajuNextFor = function(lv) {
-if (lv < __dajuNextExp.length) return __dajuNextExp[lv] || 100;
-return 52500 + (lv - 50) * 2500;
-};
-var __dajuExpFor = function(lv) {
-return __dajuAddExp[lv] || 250;
-};
 var __dajuTrain = {};
 try {
 var __dajuTrainRaw = cc.sys.localStorage.getItem("daju_train_attrs");
@@ -153,8 +146,8 @@ dayBuyCnt: Number(a.dayBuyCnt) || 0,
 clgTimes: __dajuStageOf(t),
 redBagNum: 0,
 redBagStartTime: 0,
-nextExp: __dajuNextFor(lv),
-premaxExp: __dajuNextFor(lv)
+nextExp: __dajuNextExp[lv] || 100,
+premaxExp: __dajuNextExp[lv] || 100
 };
 };
 var __dajuAttrs = { 1: __dajuGetAttr(1), 2: __dajuGetAttr(2), 3: __dajuGetAttr(3), 4: __dajuGetAttr(4), 5: __dajuGetAttr(5) };
@@ -183,7 +176,11 @@ if (__m) __t = Number(__m[1]);
 } catch (e) {}
 }
 var __max = __dajuMaxStage[__t] || 1;
+var __k = "daju_train_stage_" + __t;
 var __i = __dajuStageOf(__t);
+try {
+cc.sys.localStorage.setItem(__k, String((__i + 1) % __max));
+} catch (e) {}
 console.log("DAJU_TRAIN_START", __t, __i, __max, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
@@ -212,27 +209,18 @@ if (__prm) __pr = Number(__prm[1]);
 } catch (e) {}
 }
 var __pa = __dajuGetAttr(__pt);
-var __oldLv = __pa.lv;
 var __padd = 0;
 var __prewards = [];
-if (1 == __pr) {
-__padd = __dajuExpFor(__pa.lv);
+if (__pr >= 1) {
+__padd = __dajuAddExp[__pa.lv] || 50;
 __pa.exp = __pa.exp + __padd;
-while (__pa.exp >= __dajuNextFor(__pa.lv)) {
-__pa.exp = __pa.exp - __dajuNextFor(__pa.lv);
+while (__pa.lv < 6 && __pa.exp >= __dajuNextExp[__pa.lv]) {
+__pa.exp = __pa.exp - __dajuNextExp[__pa.lv];
 __pa.lv = __pa.lv + 1;
 }
-}
-if (__pr >= 1) {
+__pa.nextExp = __dajuNextExp[__pa.lv] || 100;
+__pa.premaxExp = __dajuNextExp[__pa.lv] || 100;
 __pa.dayUseCnt = __pa.dayUseCnt + 1;
-var __pkey = "daju_train_stage_" + __pt;
-var __pmax = __dajuMaxStage[__pt] || 1;
-var __pnow = __dajuStageOf(__pt);
-try {
-cc.sys.localStorage.setItem(__pkey, String((__pnow + 1) % __pmax));
-} catch (e) {}
-__pa.nextExp = __dajuNextFor(__pa.lv);
-__pa.premaxExp = __dajuNextFor(__pa.lv);
 __dajuTrain[__pt] = {
 lv: __pa.lv,
 exp: __pa.exp,
@@ -240,20 +228,17 @@ dayUseCnt: __pa.dayUseCnt,
 dayBuyCnt: __pa.dayBuyCnt
 };
 __dajuSaveTrain();
-}
-var __levels = __pa.lv - __oldLv;
-if (__levels > 0) {
 __prewards = [ {
 itemId: 50001002,
-num: 10000 * __levels
+num: 10000
 }, {
 itemId: 50001001,
-num: 1000 * __levels
+num: 1000
 } ];
 }
 __pa.clgTimes = __dajuStageOf(__pt);
 var __ptime = Number(__pp.passTime) || 0;
-console.log("DAJU_TRAIN_PASS", __pt, __pr, __oldLv, __pa.lv, __padd, __pa.exp, __ptime, this.buildParams);
+console.log("DAJU_TRAIN_PASS", __pt, __pr, __padd, __pa.lv, __pa.exp, __ptime, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
 rewards: __prewards,
