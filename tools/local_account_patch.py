@@ -109,21 +109,8 @@ var e = this;
 if (0 != cc.sys.getNetworkType()) t(); else {'''
 
 NEW_LOAD = '''e.prototype.load = function() {
-var __dajuAttr = function() {
-return {
-lv: 1,
-exp: 0,
-dayUseCnt: 0,
-clgTimes: 0,
-dayAddExp: 0,
-dayBuyCnt: 0,
-redBagNum: 0,
-redBagStartTime: 0,
-nextExp: 100,
-premaxExp: 100
-};
-};
-var __dajuAttrs = { 1: __dajuAttr(), 2: __dajuAttr(), 3: __dajuAttr(), 4: __dajuAttr(), 5: __dajuAttr() };
+var __dajuNextExp = [ 50, 150, 200, 250, 400, 350, 400, 450, 500, 550, 1300, 1500, 1700, 1900, 2100, 2300, 2500, 2700, 2900, 3100, 5100, 5550, 6000, 6450, 6900, 7350, 7800, 8250, 8700, 9150, 13000, 14000, 15000, 16000, 17000, 18000, 19000, 20000, 21000, 22000, 30000, 32500, 35000, 37500, 40000, 42500, 45000, 47500, 50000, 52500, 52500 ];
+var __dajuAddExp = [ 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250 ];
 var __dajuMaxStage = { 1: 1883, 2: 3214, 3: 341, 4: 50, 5: 3368 };
 var __dajuStageOf = function(t) {
 var m = __dajuMaxStage[t] || 1;
@@ -133,6 +120,37 @@ i = Number(cc.sys.localStorage.getItem("daju_train_stage_" + t)) || 0;
 } catch (e) {}
 return i % m;
 };
+var __dajuTrain = {};
+try {
+var __dajuTrainRaw = cc.sys.localStorage.getItem("daju_train_attrs");
+if (__dajuTrainRaw) {
+var __dajuTrainObj = JSON.parse(__dajuTrainRaw);
+if (__dajuTrainObj && "object" == typeof __dajuTrainObj) __dajuTrain = __dajuTrainObj;
+}
+} catch (e) {}
+var __dajuSaveTrain = function() {
+try {
+cc.sys.localStorage.setItem("daju_train_attrs", JSON.stringify(__dajuTrain));
+} catch (e) {}
+};
+var __dajuGetAttr = function(t) {
+var a = __dajuTrain[t] || {};
+var lv = Number(a.lv) || 1;
+var exp = Number(a.exp) || 0;
+return {
+lv: lv,
+exp: exp,
+dayUseCnt: Number(a.dayUseCnt) || 0,
+dayAddExp: 0,
+dayBuyCnt: Number(a.dayBuyCnt) || 0,
+clgTimes: __dajuStageOf(t),
+redBagNum: 0,
+redBagStartTime: 0,
+nextExp: __dajuNextExp[lv] || 100,
+premaxExp: __dajuNextExp[lv] || 100
+};
+};
+var __dajuAttrs = { 1: __dajuGetAttr(1), 2: __dajuGetAttr(2), 3: __dajuGetAttr(3), 4: __dajuGetAttr(4), 5: __dajuGetAttr(5) };
 if ("getUserInfoByAdditionalOrder" == this.method) {
 this.handler.onResponseInfoSuccess({});
 return;
@@ -184,12 +202,47 @@ if (__pm) __pt = Number(__pm[1]);
 } catch (e) {}
 }
 var __pr = Number(__pp.result);
-console.log("DAJU_TRAIN_PASS", __pt, __pr, this.buildParams);
+if (!__pr) {
+try {
+var __prm = /"result"\s*:\s*(\d+)/.exec(this.buildParams || "");
+if (__prm) __pr = Number(__prm[1]);
+} catch (e) {}
+}
+var __pa = __dajuGetAttr(__pt);
+var __padd = 0;
+var __prewards = [];
+if (__pr >= 1) {
+__padd = __dajuAddExp[__pa.lv] || 50;
+__pa.exp = __pa.exp + __padd;
+while (__pa.lv < 6 && __pa.exp >= __dajuNextExp[__pa.lv]) {
+__pa.exp = __pa.exp - __dajuNextExp[__pa.lv];
+__pa.lv = __pa.lv + 1;
+}
+__pa.nextExp = __dajuNextExp[__pa.lv] || 100;
+__pa.premaxExp = __dajuNextExp[__pa.lv] || 100;
+__pa.dayUseCnt = __pa.dayUseCnt + 1;
+__dajuTrain[__pt] = {
+lv: __pa.lv,
+exp: __pa.exp,
+dayUseCnt: __pa.dayUseCnt,
+dayBuyCnt: __pa.dayBuyCnt
+};
+__dajuSaveTrain();
+__prewards = [ {
+itemId: 50001002,
+num: 500
+}, {
+itemId: 50001001,
+num: 10
+} ];
+}
+__pa.clgTimes = __dajuStageOf(__pt);
+console.log("DAJU_TRAIN_PASS", __pt, __pr, __padd, __pa.lv, __pa.exp, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
-rewards: [],
-addExp: 0,
-attrInfoBean: __dajuAttr(),
+rewards: __prewards,
+addExp: __padd,
+attrInfoBean: __pa,
 passTime: 0
 });
 return;
@@ -209,14 +262,14 @@ return;
 if ("getRedBag" == this.method) {
 this.handler.onResponseInfoSuccess({
 rewards: [],
-attrInfoBean: __dajuAttr()
+attrInfoBean: __dajuGetAttr(1)
 });
 return;
 }
 if ("buyClgTimes" == this.method) {
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
-attrInfoBean: __dajuAttr()
+attrInfoBean: __dajuGetAttr(1)
 });
 return;
 }
