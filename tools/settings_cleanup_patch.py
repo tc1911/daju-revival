@@ -53,6 +53,38 @@ row.on(cc.Node.EventType.TOUCH_END, action);
 }
 dajuFooterRow("游戏说明", 29, function() { self.onClickButton({ name: "btn_1<Button>" }); });
 dajuFooterRow("关于", -29, function() { self.onClickButton({ name: "btn_2<Button>" }); });
+function dajuFooterPair(t1, t2, y, a1, a2) {
+var row = new cc.Node("dajuSavePair");
+footer.addChild(row);
+row.setContentSize(540, 50);
+row.setPosition(0, y);
+var half = function(x, text, action) {
+var cell = new cc.Node(text);
+row.addChild(cell);
+cell.setContentSize(266, 50);
+cell.setPosition(x, 0);
+var bg = cell.addComponent(cc.Graphics);
+bg.fillColor = cc.color(255, 250, 242, 255);
+bg.rect(-133, -25, 266, 50);
+bg.fill();
+var btn = cell.addComponent(cc.Button);
+btn.transition = cc.Button.Transition.NONE;
+var ln = new cc.Node("label");
+cell.addChild(ln);
+var l = ln.addComponent(cc.Label);
+l.string = text;
+l.fontSize = 24;
+l.lineHeight = 28;
+ln.color = cc.color(90, 70, 50);
+ln.setPosition(0, 0);
+cell.on(cc.Node.EventType.TOUCH_END, action);
+};
+half(-136, t1, a1);
+half(136, t2, a2);
+}
+dajuFooterPair("导出存档", "导入存档", -87,
+function() { window.__dajuExportSave && window.__dajuExportSave(); },
+function() { window.__dajuImportSave && window.__dajuImportSave(); });
 }
 if (this.offMusic) this.offMusic.setPosition(210, 233.5);'''
 
@@ -348,6 +380,84 @@ coffee: this._coffee
 
 
 
+
+SAVE_TRANSFER_JS = r"""
+window.__dajuExportSave = function() {
+try {
+var s = window.__dajuSaveLoad ? window.__dajuSaveLoad() : null;
+if (!s || 1 !== Number(s.version) || !s.data) {
+window.__require("Common").default.showToast("没有可导出的 v1 存档");
+return;
+}
+var text = JSON.stringify(s);
+if (typeof jsb === "undefined" || !jsb.reflection) {
+window.__require("Common").default.showToast("仅支持 Android 导出");
+return;
+}
+jsb.reflection.callStaticMethod("org/cocos2dx/javascript/ProfileBridge", "exportSave", "(Ljava/lang/String;)V", text);
+} catch (e) {
+window.__require("Common").default.showToast("导出失败: " + (e.message || e));
+}
+};
+window.__dajuImportSave = function() {
+try {
+if (typeof jsb === "undefined" || !jsb.reflection) {
+window.__require("Common").default.showToast("仅支持 Android 导入");
+return;
+}
+jsb.reflection.callStaticMethod("org/cocos2dx/javascript/ProfileBridge", "importSave", "()V");
+} catch (e) {
+window.__require("Common").default.showToast("导入失败: " + (e.message || e));
+}
+};
+window.onDajuSaveExported = function(ok, msg) {
+window.__require("Common").default.showToast(ok ? "存档已导出" : (msg || "导出失败"));
+};
+window.onDajuSaveImportError = function(msg) {
+window.__require("Common").default.showToast(msg || "存档读取失败");
+};
+window.onDajuSaveImported = function(text) {
+var Common = window.__require("Common").default;
+var KEY = "daju_save_v1";
+var keys = [
+"daju_bag_items", "daju_npc_favors", "daju_train_attrs",
+"daju_shop_daily", "daju_bought_extra_list", "daju_daily_sign_date",
+"daju_profile_name", "daju_profile_head",
+"daju_red_envelope_list", "daju_chat_emotion_status", "daju_gossip_list",
+"daju_intelligence_list", "daju_watch_ad_list", "daju_red_envelope_ad_list",
+"daju_npc_rest_time", "daju_npc_rest_id"
+];
+for (var t = 1; t <= 5; t++) keys.push("daju_train_stage_" + t);
+try {
+var s = JSON.parse(text);
+if (!s || 1 !== Number(s.version) || !s.data || "object" != typeof s.data) {
+throw new Error("不是 v1 存档格式");
+}
+var cur = cc.sys.localStorage.getItem(KEY);
+if (cur) cc.sys.localStorage.setItem(KEY + "_import_backup", cur);
+cc.sys.localStorage.setItem(KEY, JSON.stringify(s));
+if (window.__dajuSaveReset) window.__dajuSaveReset();
+for (var i = 0; i < keys.length; i++) {
+var k = keys[i];
+if (Object.prototype.hasOwnProperty.call(s.data, k)) {
+cc.sys.localStorage.setItem(k, String(s.data[k]));
+} else {
+cc.sys.localStorage.removeItem(k);
+}
+}
+for (var dk in s.data) {
+if (dk.indexOf("daju_") === 0 && keys.indexOf(dk) < 0) {
+cc.sys.localStorage.setItem(dk, String(s.data[dk]));
+}
+}
+Common.showToast("存档导入成功，正在重启");
+setTimeout(function() { cc.game.restart(); }, 800);
+} catch (e) {
+Common.showToast("存档导入失败: " + (e.message || e));
+}
+};
+"""
+
 def main() -> None:
     if len(sys.argv) != 3:
         sys.exit("usage: tools/settings_cleanup_patch.py <in.js> <out.js>")
@@ -454,6 +564,7 @@ t.prototype.setData""", 1)
     about = ABOUT_JS.replace("版本 6.12 · versionCode 12",
                              f"版本 {project_version_name()}")
     text += about
+    text += SAVE_TRANSFER_JS
     text += BACK_JS
     text += FULL_POWER_JS
     open(out, "w", encoding="utf-8").write(text)

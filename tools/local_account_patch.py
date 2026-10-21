@@ -913,7 +913,7 @@ state = migrate();
 return state;
 }
 function managed(k) {
-return typeof k === "string" && k.indexOf("daju_") === 0 && k !== KEY && k !== BACKUP;
+return typeof k === "string" && k.indexOf("daju_") === 0 && k.indexOf("daju_save_v1") !== 0;
 }
 function get(k, d) {
 var s = load();
@@ -953,6 +953,7 @@ window.__dajuSaveGet = get;
 window.__dajuSaveSet = set;
 window.__dajuSaveRemove = remove;
 window.__dajuSaveLoad = load;
+window.__dajuSaveReset = function() { state = null; };
 try {
 if (rawLS) {
 rawLS.getItem = function(k) { if (managed(k)) return get(k, null); return rawGet(k); };

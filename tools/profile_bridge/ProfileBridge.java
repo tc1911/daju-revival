@@ -21,13 +21,21 @@ import android.util.Log;
 import android.widget.Toast;
 import android.widget.EditText;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class ProfileBridge implements PreferenceManager.OnActivityResultListener {
     private static ProfileBridge instance;
+    private static final int REQ_AVATAR = 1001;
+    private static final int REQ_EXPORT = 1002;
+    private static final int REQ_IMPORT = 1003;
+    private static String pendingExportJson;
 
     private static Activity activity() {
         try {
@@ -142,6 +150,73 @@ public class ProfileBridge implements PreferenceManager.OnActivityResultListener
         });
     }
 
+    public static void exportSave(final String json) {
+        final Activity a = activity();
+        if (a == null) return;
+        ensureListener();
+        pendingExportJson = json;
+        a.runOnUiThread(new Runnable() {
+            public void run() {
+                try {
+                    Intent i = new Intent("android.intent.action.CREATE_DOCUMENT");
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("application/gzip");
+                    i.putExtra(Intent.EXTRA_TITLE, "daju-save-" + System.currentTimeMillis() + ".json.gz");
+                    a.startActivityForResult(i, REQ_EXPORT);
+                } catch (Throwable t) {
+                    Log.e("ProfileBridge", "export picker failed", t);
+                    eval("window.onDajuSaveExported && window.onDajuSaveExported(false,'无法打开保存窗口')");
+                }
+            }
+        });
+    }
+
+    public static void importSave() {
+        final Activity a = activity();
+        if (a == null) return;
+        ensureListener();
+        a.runOnUiThread(new Runnable() {
+            public void run() {
+                try {
+                    Intent i = new Intent("android.intent.action.OPEN_DOCUMENT");
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    a.startActivityForResult(i, REQ_IMPORT);
+                } catch (Throwable t) {
+                    Log.e("ProfileBridge", "import picker failed", t);
+                    eval("window.onDajuSaveImportError && window.onDajuSaveImportError('无法打开文件选择器')");
+                }
+            }
+        });
+    }
+
+    private static void writeGzip(Activity a, Uri uri) throws Exception {
+        if (pendingExportJson == null) throw new Exception("没有待写出的存档");
+        OutputStream os = a.getContentResolver().openOutputStream(uri);
+        if (os == null) throw new Exception("无法写入文件");
+        GZIPOutputStream gz = new GZIPOutputStream(os);
+        gz.write(pendingExportJson.getBytes("UTF-8"));
+        gz.close();
+        os.close();
+        pendingExportJson = null;
+        Toast.makeText(a, "存档已导出", Toast.LENGTH_SHORT).show();
+        eval("window.onDajuSaveExported && window.onDajuSaveExported(true,'')");
+    }
+
+    private static void readGzip(Activity a, Uri uri) throws Exception {
+        InputStream is = a.getContentResolver().openInputStream(uri);
+        if (is == null) throw new Exception("无法读取文件");
+        GZIPInputStream gz = new GZIPInputStream(is);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = gz.read(buf)) > 0) bos.write(buf, 0, n);
+        gz.close();
+        is.close();
+        String text = new String(bos.toByteArray(), "UTF-8");
+        eval("window.onDajuSaveImported && window.onDajuSaveImported('" + esc(text) + "')");
+    }
+
     private static void ensureListener() {
         if (instance != null) return;
         instance = new ProfileBridge();
@@ -185,7 +260,31 @@ public class ProfileBridge implements PreferenceManager.OnActivityResultListener
 
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.e("ProfileBridge", "onActivityResult req=" + requestCode + " res=" + resultCode + " data=" + data);
-        if (requestCode != 1001) return false;
+        if (requestCode == REQ_EXPORT) {
+            if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) return false;
+            try {
+                writeGzip(activity(), data.getData());
+                return true;
+            } catch (Throwable t) {
+                Log.e("ProfileBridge", "export failed", t);
+                Toast.makeText(activity(), "存档导出失败", Toast.LENGTH_SHORT).show();
+                eval("window.onDajuSaveExported && window.onDajuSaveExported(false,'存档导出失败')");
+                return false;
+            }
+        }
+        if (requestCode == REQ_IMPORT) {
+            if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) return false;
+            try {
+                readGzip(activity(), data.getData());
+                return true;
+            } catch (Throwable t) {
+                Log.e("ProfileBridge", "import failed", t);
+                Toast.makeText(activity(), "存档读取失败", Toast.LENGTH_SHORT).show();
+                eval("window.onDajuSaveImportError && window.onDajuSaveImportError('存档读取失败')");
+                return false;
+            }
+        }
+        if (requestCode != REQ_AVATAR) return false;
         if (resultCode != Activity.RESULT_OK || data == null) return false;
         Activity act0 = activity();
         if (act0 != null) {
