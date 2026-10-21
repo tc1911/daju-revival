@@ -24,7 +24,6 @@ PERMS = [
     "android.permission.READ_PHONE_STATE",
     "android.permission.READ_EXTERNAL_STORAGE",
     "android.permission.WRITE_EXTERNAL_STORAGE",
-    "android.permission.ACCESS_WIFI_STATE",
     "android.permission.CHANGE_WIFI_STATE",
     "android.permission.REQUEST_INSTALL_PACKAGES",
     "android.permission.FOREGROUND_SERVICE",

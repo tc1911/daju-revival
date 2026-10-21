@@ -112,6 +112,17 @@ def main() -> None:
     for sig, repl in AD_DISABLE.items():
         text = replace_method(text, sig, repl)
 
+    # offlined 后 GspDcAgent 可能未初始化；skip setConsent 防 NPE。
+    consent = """const/4 v0, 0x1
+
+    .line 199
+    invoke-static {v0}, Lcom/happyelements/hei/common/SdkClient;->setConsent(Z)V"""
+    if consent in text:
+        text = text.replace(consent, """const/4 v0, 0x1
+
+    .line 199
+    nop""", 1)
+
     open(app, "w", encoding="utf-8").write(text)
 
     # 退出确认回调原本会再调一次 onBackPressed()；返回键已改为转发 JS，
