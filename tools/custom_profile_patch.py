@@ -320,6 +320,22 @@ def main() -> None:
         sys.exit("setOwnInfo block boundaries not found")
     text = text[:own_start] + SET_OWN_NEW + text[own_end:]
 
+    friend_old = """} else {
+this.verification.active = !1;
+this.container.active = !0;
+}
+this.refreshDynamicIcon();"""
+    friend_new = """} else {
+this.verification.active = !1;
+this.container.active = !0;
+this.container.setPosition(0, this.container.y);
+this.verification.setPosition(540, 0);
+}
+this.refreshDynamicIcon();"""
+    if text.count(friend_old) != 1:
+        sys.exit("FriendUI refreshView reset: expected 1 match, found %d" % text.count(friend_old))
+    text = text.replace(friend_old, friend_new, 1)
+
     text = text + JS
     open(out, "w", encoding="utf-8").write(text)
     print(f"native profile bridge UI patched: {src} -> {out}")
