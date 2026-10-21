@@ -600,6 +600,135 @@ PATCHES = [
 ]
 
 
+
+SAVE_API_JS = r"""
+(function() {
+var KEY = "daju_save_v1";
+var BACKUP = "daju_save_v1_backup";
+var KNOWN = [
+"daju_bag_items",
+"daju_npc_favors",
+"daju_train_attrs",
+"daju_shop_daily",
+"daju_bought_extra_list",
+"daju_daily_sign_date",
+"daju_profile_name",
+"daju_profile_head"
+];
+var rawLS = null, rawGet = null, rawSet = null, rawRemove = null;
+try {
+rawLS = cc.sys.localStorage;
+rawGet = rawLS.getItem.bind(rawLS);
+rawSet = rawLS.setItem.bind(rawLS);
+rawRemove = rawLS.removeItem ? rawLS.removeItem.bind(rawLS) : null;
+} catch (e) {}
+function rg(k) {
+try {
+if (rawGet) return rawGet(k);
+return cc.sys.localStorage.getItem(k);
+} catch (e) { return null; }
+}
+function rs(k, v) {
+try {
+if (rawSet) rawSet(k, v);
+else cc.sys.localStorage.setItem(k, v);
+} catch (e) {}
+}
+function rr(k) {
+try {
+if (rawRemove) rawRemove(k);
+else cc.sys.localStorage.removeItem(k);
+} catch (e) {}
+}
+var state = null;
+function persist() {
+if (!state) return;
+try { rs(KEY, JSON.stringify(state)); } catch (e) {}
+}
+function migrate() {
+var data = {};
+for (var i = 0; i < KNOWN.length; i++) {
+var v = rg(KNOWN[i]);
+if (v !== null && v !== undefined) data[KNOWN[i]] = String(v);
+}
+for (var t = 1; t <= 5; t++) {
+var k = "daju_train_stage_" + t;
+var v2 = rg(k);
+if (v2 !== null && v2 !== undefined) data[k] = String(v2);
+}
+var s = { version: 1, savedAt: Date.now(), data: data };
+try { rs(BACKUP, JSON.stringify(s)); } catch (e) {}
+try { rs(KEY, JSON.stringify(s)); } catch (e) {}
+return s;
+}
+function load() {
+if (state) return state;
+var raw = rg(KEY);
+if (raw) {
+try {
+var s = JSON.parse(raw);
+if (s && s.version === 1 && s.data && typeof s.data === "object") {
+state = s;
+return state;
+}
+} catch (e) {}
+}
+state = migrate();
+return state;
+}
+function managed(k) {
+return typeof k === "string" && k.indexOf("daju_") === 0 && k !== KEY && k !== BACKUP;
+}
+function get(k, d) {
+var s = load();
+var raw = rg(k);
+if (Object.prototype.hasOwnProperty.call(s.data, k)) {
+if (raw !== null && raw !== undefined && String(raw) !== String(s.data[k])) {
+s.data[k] = String(raw);
+s.savedAt = Date.now();
+persist();
+}
+return s.data[k];
+}
+if (raw !== null && raw !== undefined) {
+s.data[k] = String(raw);
+s.savedAt = Date.now();
+persist();
+return s.data[k];
+}
+return d;
+}
+function set(k, v) {
+var s = load();
+var sv = String(v);
+rs(k, sv);
+s.data[k] = sv;
+s.savedAt = Date.now();
+persist();
+}
+function remove(k) {
+var s = load();
+rr(k);
+try { delete s.data[k]; } catch (e) {}
+s.savedAt = Date.now();
+persist();
+}
+window.__dajuSaveGet = get;
+window.__dajuSaveSet = set;
+window.__dajuSaveRemove = remove;
+window.__dajuSaveLoad = load;
+try {
+if (rawLS) {
+rawLS.getItem = function(k) { if (managed(k)) return get(k, null); return rawGet(k); };
+rawLS.setItem = function(k, v) { if (managed(k)) { set(k, v); return; } rawSet(k, v); };
+rawLS.removeItem = function(k) { if (managed(k)) { remove(k); return; } if (rawRemove) rawRemove(k); };
+}
+} catch (e) {}
+try { load(); } catch (e) {}
+})();
+"""
+
+
 def main() -> None:
     if len(sys.argv) != 3:
         sys.exit("usage: tools/local_account_patch.py <decrypted-project.js> <output.js>")
@@ -631,6 +760,7 @@ this.changeScene();
 };
 '''
     text = text[:start] + new_special + text[end:]
+    text = text + SAVE_API_JS
 
     open(out, "w", encoding="utf-8").write(text)
     print(f"local-account patched {src} -> {out}")
