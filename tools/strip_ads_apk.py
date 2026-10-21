@@ -40,11 +40,7 @@ AD_NAMES = [
     "com.wind.sdk.", "com.wind.devicehelper", "com.bun.miitmdid",
     "com.asus.msa", "com.ta.utdid2",
 ]
-LIBS = {
-    "libnms.so", "libsgcore.so", "libtobEmbedEncrypt.so",
-    "libbuffer_pg.so", "libfile_lock_pg.so",
-    "lib39285EFA.so",
-}
+LIBS = set()  # 暂不删 native 库：先保证启动；广告已由组件/权限/初始化层切断
 
 
 def run(cmd):
