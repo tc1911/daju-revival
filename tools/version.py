@@ -20,15 +20,16 @@ ROOT = Path(__file__).resolve().parent.parent
 VERSION_FILE = ROOT / "version.toml"
 
 
-def read() -> tuple[int, int]:
+def read() -> tuple[int, int, str]:
     if not VERSION_FILE.exists():
-        return 2, 0
+        return 2, 0, "6.12"
     text = VERSION_FILE.read_text(encoding="utf-8")
     main = re.search(r"^main\s*=\s*(\d+)", text, re.M)
     revision = re.search(r"^revision\s*=\s*(\d+)", text, re.M)
+    game = re.search(r'^game\s*=\s*"([^"]+)"', text, re.M)
     if not main or not revision:
         sys.exit(f"{VERSION_FILE} 缺少 main/revision")
-    return int(main.group(1)), int(revision.group(1))
+    return int(main.group(1)), int(revision.group(1)), game.group(1) if game else "6.12"
 
 
 def code(main: int, revision: int) -> int:
@@ -38,16 +39,18 @@ def code(main: int, revision: int) -> int:
 def write(main: int, revision: int) -> None:
     if main < 0 or not 0 <= revision <= 99:
         sys.exit("版本范围：main >= 0，0 <= revision <= 99")
+    game = read()[2]
     VERSION_FILE.write_text(
         "[version]\n"
+        f'game = "{game}"\n'
         f"main = {main}\n"
         f"revision = {revision}\n",
         encoding="utf-8",
     )
 
 
-def show(main: int, revision: int) -> None:
-    print(f"main={main} revision={revision} code={code(main, revision)}")
+def show(main: int, revision: int, game: str) -> None:
+    print(f"版本 {game}.{code(main, revision)} (main={main} revision={revision} code={code(main, revision)})")
 
 
 def main(argv: list[str]) -> int:
@@ -58,7 +61,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--set", action="store_true", help="手工设置版本")
     args = p.parse_args(argv)
 
-    cur_main, cur_rev = read()
+    cur_main, cur_rev, game = read()
     if args.set:
         if args.main is None and args.revision is None:
             sys.exit("--set 需要 --main 或 --revision")

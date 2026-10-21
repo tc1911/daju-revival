@@ -29,13 +29,13 @@
 移植版与游戏 6.12 分开编号：
 
 ```bash
-tools/version.py show       # 当前 200
-tools/version.py dev        # 开发/测试版 +1 → 201
-tools/version.py release    # 正式主版本 +1 → 300
+tools/version.py show       # 当前 6.12.200
+tools/version.py dev        # 开发/测试版 +1 → 6.12.201
+tools/version.py release    # 正式主版本 +1 → 6.12.300
 ```
 
-规则：`code = main * 100 + revision`；当前 `main=2`、`revision=0`，即 **200**。
-关于页会显示「游戏 6.12 · 移植版 200」。Android manifest 仍是游戏原版 `6.12/12`。
+规则：`code = main * 100 + revision`，显示为 `<game>.<code>`；当前 `main=2`、`revision=0`，即 **6.12.200**。
+关于页会显示「版本 6.12.200」。Android manifest 仍是游戏原版 `6.12/12`。
 
 ## 加密事实
 

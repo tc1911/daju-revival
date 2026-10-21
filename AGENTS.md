@@ -95,16 +95,17 @@ nopay（merge + offline + local + monetization + album）
 与游戏 6.12 并行，独立记录移植版：
 
 ```bash
-tools/version.py show       # main=2 revision=0 code=200
-tools/version.py dev        # 下一个开发/测试版：main=2 revision=1 code=201
-tools/version.py release    # 下一个正式主版本：main=3 revision=0 code=300
+tools/version.py show       # 版本 6.12.200 (main=2 revision=0 code=200)
+tools/version.py dev        # 下一个开发/测试版：6.12.201 (main=2 revision=1)
+tools/version.py release    # 下一个正式主版本：6.12.300 (main=3 revision=0)
 tools/version.py check
 ```
 
-- 当前 `version.toml`：`main=2`、`revision=0` → **200**
+- 当前 `version.toml`：`main=2`、`revision=0` → **6.12.200**
 - `code = main * 100 + revision`
 - **不自动递增**：改完要测试时手动 `dev`；正式发版用 `release`
-- 关于页显示「游戏 6.12 · 移植版 200」；Android manifest 仍是游戏原版 `6.12/12`，两套版本不要混用
+- 对外显示格式为「游戏版本.移植版号」，当前 **6.12.200**；`dev` 后 6.12.201，`release` 后 6.12.300
+- Android manifest 仍是游戏原版 `6.12/12`，两套版本不要混用
 - 版本号变化后重跑 `tools/build.py profile-native --force`，并更新 `docs/修改列表.md` 第 0 节
 
 ## 环境变量

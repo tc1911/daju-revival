@@ -66,13 +66,15 @@ g.AudioPlayer.getInst().playSound(h.AudioUrls.common_sound);
 window.openAboutPage && window.openAboutPage();
 break;'''
 
-def project_version_code() -> int:
+def project_version_name() -> str:
     try:
         with open(Path(__file__).resolve().parent.parent / "version.toml", "rb") as f:
             v = tomllib.load(f)["version"]
-        return int(v["main"]) * 100 + int(v["revision"])
+        game = str(v.get("game", "6.12"))
+        code = int(v["main"]) * 100 + int(v["revision"])
+        return f"{game}.{code}"
     except Exception:
-        return 200
+        return "6.12.200"
 
 
 ABOUT_JS = '''
@@ -450,7 +452,7 @@ c.default.EventManager.fire(l.EventName.refreshShop);
 t.prototype.setData""", 1)
 
     about = ABOUT_JS.replace("版本 6.12 · versionCode 12",
-                             f"游戏 6.12 · 移植版 {project_version_code()}")
+                             f"版本 {project_version_name()}")
     text += about
     text += BACK_JS
     text += FULL_POWER_JS
