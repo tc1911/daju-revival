@@ -58,29 +58,33 @@ var row = new cc.Node("dajuSavePair");
 footer.addChild(row);
 row.setContentSize(540, 50);
 row.setPosition(0, y);
-var half = function(x, text, action) {
-var cell = new cc.Node(text);
-row.addChild(cell);
-cell.setContentSize(266, 50);
-cell.setPosition(x, 0);
-var bg = cell.addComponent(cc.Graphics);
+var bg = row.addComponent(cc.Graphics);
 bg.fillColor = cc.color(255, 250, 242, 255);
-bg.rect(-133, -25, 266, 50);
+bg.rect(-270, -25, 540, 50);
 bg.fill();
-var btn = cell.addComponent(cc.Button);
+var btn = row.addComponent(cc.Button);
 btn.transition = cc.Button.Transition.NONE;
-var ln = new cc.Node("label");
-cell.addChild(ln);
-var l = ln.addComponent(cc.Label);
-l.string = text;
-l.fontSize = 24;
-l.lineHeight = 28;
-ln.color = cc.color(90, 70, 50);
-ln.setPosition(0, 0);
-cell.on(cc.Node.EventType.TOUCH_END, action);
-};
-half(-136, t1, a1);
-half(136, t2, a2);
+var l1 = new cc.Node("label1");
+row.addChild(l1);
+var a = l1.addComponent(cc.Label);
+a.string = t1;
+a.fontSize = 24;
+a.lineHeight = 28;
+l1.color = cc.color(90, 70, 50);
+l1.setPosition(-135, 0);
+var l2 = new cc.Node("label2");
+row.addChild(l2);
+var b = l2.addComponent(cc.Label);
+b.string = t2;
+b.fontSize = 24;
+b.lineHeight = 28;
+l2.color = cc.color(90, 70, 50);
+l2.setPosition(135, 0);
+row.on(cc.Node.EventType.TOUCH_END, function(ev) {
+var p = ev.getLocation();
+var local = row.convertToNodeSpaceAR(cc.v2(p.x, p.y));
+if (local.x < 0) a1(); else a2();
+});
 }
 dajuFooterPair("导出存档", "导入存档", -87,
 function() { window.__dajuExportSave && window.__dajuExportSave(); },
@@ -401,6 +405,8 @@ window.__require("Common").default.showToast("导出失败: " + (e.message || e)
 };
 window.__dajuImportSave = function() {
 try {
+console.log("DAJU_SAVE_IMPORT_TAP");
+window.__require("Common").default.showToast("正在打开文件选择器");
 if (typeof jsb === "undefined" || !jsb.reflection) {
 window.__require("Common").default.showToast("仅支持 Android 导入");
 return;
