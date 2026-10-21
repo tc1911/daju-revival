@@ -418,6 +418,7 @@ window.__require("Common").default.showToast(msg || "存档读取失败");
 };
 window.onDajuSaveImported = function(text) {
 var Common = window.__require("Common").default;
+console.log("DAJU_IMPORT_TEXT", text ? text.length : -1, text ? text.substring(0, 120) : "");
 var KEY = "daju_save_v1";
 var keys = [
 "daju_bag_items", "daju_npc_favors", "daju_train_attrs",
@@ -430,6 +431,7 @@ var keys = [
 for (var t = 1; t <= 5; t++) keys.push("daju_train_stage_" + t);
 try {
 var s = JSON.parse(text);
+console.log("DAJU_IMPORT_PARSED", s && s.version, s && typeof s.data);
 if (!s || 1 !== Number(s.version) || !s.data || "object" != typeof s.data) {
 throw new Error("不是 v1 存档格式");
 }
@@ -450,8 +452,9 @@ if (dk.indexOf("daju_") === 0 && keys.indexOf(dk) < 0) {
 cc.sys.localStorage.setItem(dk, String(s.data[dk]));
 }
 }
+if (window.__dajuSaveLock) window.__dajuSaveLock(true);
 Common.showToast("存档导入成功，正在重启");
-setTimeout(function() { cc.game.restart(); }, 800);
+setTimeout(function() { cc.game.restart(); }, 50);
 } catch (e) {
 Common.showToast("存档导入失败: " + (e.message || e));
 }

@@ -175,6 +175,7 @@ public class ProfileBridge implements PreferenceManager.OnActivityResultListener
         final Activity a = activity();
         if (a == null) return;
         ensureListener();
+        Toast.makeText(a, "请选择 .json.gz 存档", Toast.LENGTH_SHORT).show();
         a.runOnUiThread(new Runnable() {
             public void run() {
                 try {
@@ -214,6 +215,8 @@ public class ProfileBridge implements PreferenceManager.OnActivityResultListener
         gz.close();
         is.close();
         String text = new String(bos.toByteArray(), "UTF-8");
+        Log.e("ProfileBridge", "import read bytes=" + text.length());
+        Toast.makeText(a, "存档读取完成，正在校验", Toast.LENGTH_SHORT).show();
         eval("window.onDajuSaveImported && window.onDajuSaveImported('" + esc(text) + "')");
     }
 
@@ -273,6 +276,7 @@ public class ProfileBridge implements PreferenceManager.OnActivityResultListener
             }
         }
         if (requestCode == REQ_IMPORT) {
+            Log.e("ProfileBridge", "import result ok=" + (resultCode == Activity.RESULT_OK) + " data=" + data);
             if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) return false;
             try {
                 readGzip(activity(), data.getData());

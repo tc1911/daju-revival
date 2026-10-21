@@ -877,6 +877,7 @@ else cc.sys.localStorage.removeItem(k);
 } catch (e) {}
 }
 var state = null;
+var saveLocked = false;
 function persist() {
 if (!state) return;
 try { rs(KEY, JSON.stringify(state)); } catch (e) {}
@@ -935,6 +936,7 @@ return s.data[k];
 return d;
 }
 function set(k, v) {
+if (saveLocked) return;
 var s = load();
 var sv = String(v);
 rs(k, sv);
@@ -943,6 +945,7 @@ s.savedAt = Date.now();
 persist();
 }
 function remove(k) {
+if (saveLocked) return;
 var s = load();
 rr(k);
 try { delete s.data[k]; } catch (e) {}
@@ -954,6 +957,7 @@ window.__dajuSaveSet = set;
 window.__dajuSaveRemove = remove;
 window.__dajuSaveLoad = load;
 window.__dajuSaveReset = function() { state = null; };
+window.__dajuSaveLock = function(v) { saveLocked = !!v; };
 try {
 if (rawLS) {
 rawLS.getItem = function(k) { if (managed(k)) return get(k, null); return rawGet(k); };
