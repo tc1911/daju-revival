@@ -175,10 +175,10 @@ public class ProfileBridge implements PreferenceManager.OnActivityResultListener
         final Activity a = activity();
         if (a == null) return;
         ensureListener();
-        Toast.makeText(a, "请选择 .json.gz 存档", Toast.LENGTH_SHORT).show();
         a.runOnUiThread(new Runnable() {
             public void run() {
                 try {
+                    Toast.makeText(a, "请选择 .json.gz 存档", Toast.LENGTH_SHORT).show();
                     Intent i = new Intent("android.intent.action.OPEN_DOCUMENT");
                     i.addCategory(Intent.CATEGORY_OPENABLE);
                     i.setType("*/*");
