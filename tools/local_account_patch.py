@@ -176,11 +176,7 @@ if (__m) __t = Number(__m[1]);
 } catch (e) {}
 }
 var __max = __dajuMaxStage[__t] || 1;
-var __k = "daju_train_stage_" + __t;
 var __i = __dajuStageOf(__t);
-try {
-cc.sys.localStorage.setItem(__k, String((__i + 1) % __max));
-} catch (e) {}
 console.log("DAJU_TRAIN_START", __t, __i, __max, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
@@ -221,6 +217,13 @@ __pa.lv = __pa.lv + 1;
 __pa.nextExp = __dajuNextExp[__pa.lv] || 100;
 __pa.premaxExp = __dajuNextExp[__pa.lv] || 100;
 __pa.dayUseCnt = __pa.dayUseCnt + 1;
+var __pkey = "daju_train_stage_" + __pt;
+var __pmax = __dajuMaxStage[__pt] || 1;
+var __pnow = __dajuStageOf(__pt);
+try {
+cc.sys.localStorage.setItem(__pkey, String((__pnow + 1) % __pmax));
+} catch (e) {}
+__pa.clgTimes = (__pnow + 1) % __pmax;
 __dajuTrain[__pt] = {
 lv: __pa.lv,
 exp: __pa.exp,
@@ -236,7 +239,6 @@ itemId: 50001001,
 num: 1000
 } ];
 }
-__pa.clgTimes = __dajuStageOf(__pt);
 var __ptime = Number(__pp.passTime) || 0;
 console.log("DAJU_TRAIN_PASS", __pt, __pr, __padd, __pa.lv, __pa.exp, __ptime, this.buildParams);
 this.handler.onResponseInfoSuccess({
