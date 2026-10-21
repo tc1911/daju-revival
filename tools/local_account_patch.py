@@ -124,11 +124,21 @@ premaxExp: 100
 };
 };
 var __dajuAttrs = { 1: __dajuAttr(), 2: __dajuAttr(), 3: __dajuAttr(), 4: __dajuAttr(), 5: __dajuAttr() };
+var __dajuMaxStage = { 1: 1883, 2: 3214, 3: 341, 4: 50, 5: 3368 };
+var __dajuStageOf = function(t) {
+var m = __dajuMaxStage[t] || 1;
+var i = 0;
+try {
+i = Number(cc.sys.localStorage.getItem("daju_train_stage_" + t)) || 0;
+} catch (e) {}
+return i % m;
+};
 if ("getUserInfoByAdditionalOrder" == this.method) {
 this.handler.onResponseInfoSuccess({});
 return;
 }
 if ("getAttrInfo" == this.method) {
+for (var __ti = 1; __ti < 6; __ti++) __dajuAttrs[__ti].clgTimes = __dajuStageOf(__ti);
 this.handler.onResponseInfoSuccess({
 fiveAttrInfos: __dajuAttrs,
 upgradeLv: 1
@@ -147,19 +157,16 @@ var __m = /"type"\s*:\s*(\d+)/.exec(this.buildParams || "");
 if (__m) __t = Number(__m[1]);
 } catch (e) {}
 }
-var __max = { 1: 1883, 2: 3214, 3: 341, 4: 50, 5: 3368 }[__t] || 1;
+var __max = __dajuMaxStage[__t] || 1;
 var __k = "daju_train_stage_" + __t;
-var __i = 0;
-try {
-__i = Number(cc.sys.localStorage.getItem(__k)) || 0;
-} catch (e) {}
-__i = __i % __max;
+var __i = __dajuStageOf(__t);
 try {
 cc.sys.localStorage.setItem(__k, String((__i + 1) % __max));
 } catch (e) {}
 console.log("DAJU_TRAIN_START", __t, __i, __max, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
+stageIndex: __i,
 stageList: [ 4 == __t ? __i : 10000001 + __i ]
 });
 return;
@@ -366,6 +373,10 @@ this._loadBoughtExtraList();
 return this._boughtExtraList.indexOf(Number(e)) >= 0;
 };"""
 
+STAGE_LABEL_OLD = """this.game.getChildByName("level").getComponent(cc.Label).string = m.default.strfmt("第{0}关", this.attriInfo.clgTimes + 1);"""
+STAGE_LABEL_NEW = """var __dajuStageIdx = e && "number" == typeof e.stageIndex ? e.stageIndex : this.attriInfo.clgTimes;
+this.game.getChildByName("level").getComponent(cc.Label).string = m.default.strfmt("第{0}关", __dajuStageIdx + 1);"""
+
 NPC_FAVOR_OLD = """t.prototype.setNpcFavors = function(e) {
 this._npcFavors = e;
 };
@@ -466,6 +477,7 @@ PATCHES = [
     ("getLoginSNS", OLD_SNS, NEW_SNS),
     ("getChannelNameSNS", OLD_CHANNEL, NEW_CHANNEL),
     ("sendMessage", OLD_SEND, NEW_SEND),
+    ("training stage label", STAGE_LABEL_OLD, STAGE_LABEL_NEW),
     ("chatStorage npc favors persistence", NPC_FAVOR_OLD, NPC_FAVOR_NEW),
     ("chatStorage early return", OLD_EARLY, NEW_EARLY),
     ("launchOption", OLD_LAUNCH, NEW_LAUNCH),
