@@ -878,6 +878,38 @@ else cc.sys.localStorage.removeItem(k);
 }
 var state = null;
 var saveLocked = false;
+var seenKeys = {};
+var indexKey = "daju_save_key_index";
+function isMeta(k) {
+return typeof k === "string" && (k.indexOf("daju_save") === 0 || k === "HotUpdateSearchPaths");
+}
+function remember(k) {
+if (!k || isMeta(k)) return;
+if (seenKeys[k]) return;
+seenKeys[k] = 1;
+try { rs(indexKey, JSON.stringify(Object.keys(seenKeys))); } catch (e) {}
+}
+function scanKeys() {
+var scan = function(ls) {
+try {
+if (!ls || typeof ls.length !== "number" || typeof ls.key !== "function") return;
+for (var i = 0; i < ls.length; i++) {
+try { remember(ls.key(i)); } catch (e) {}
+}
+} catch (e) {}
+};
+scan(rawLS);
+try { if (window.localStorage && window.localStorage !== rawLS) scan(window.localStorage); } catch (e) {}
+}
+function loadIndex() {
+try {
+var raw = rg(indexKey);
+if (!raw) return;
+var a = JSON.parse(raw);
+if (!Array.isArray(a)) return;
+for (var i = 0; i < a.length; i++) if (a[i] && !isMeta(a[i])) seenKeys[a[i]] = 1;
+} catch (e) {}
+}
 function persist() {
 if (!state) return;
 try { rs(KEY, JSON.stringify(state)); } catch (e) {}
@@ -914,9 +946,10 @@ state = migrate();
 return state;
 }
 function managed(k) {
-return typeof k === "string" && k.indexOf("daju_") === 0 && k.indexOf("daju_save_v1") !== 0;
+return typeof k === "string" && k.indexOf("daju_") === 0 && k.indexOf("daju_save") !== 0;
 }
 function get(k, d) {
+remember(k);
 var s = load();
 var raw = rg(k);
 if (Object.prototype.hasOwnProperty.call(s.data, k)) {
@@ -937,6 +970,7 @@ return d;
 }
 function set(k, v) {
 if (saveLocked) return;
+remember(k);
 var s = load();
 var sv = String(v);
 rs(k, sv);
@@ -958,14 +992,34 @@ window.__dajuSaveRemove = remove;
 window.__dajuSaveLoad = load;
 window.__dajuSaveReset = function() { state = null; };
 window.__dajuSaveLock = function(v) { saveLocked = !!v; };
+window.__dajuSaveSnapshot = function() {
+var s = load();
+var out = { version: 1, savedAt: Date.now(), data: {} };
+for (var k in s.data) {
+if (!isMeta(k)) out.data[k] = String(s.data[k]);
+}
+scanKeys();
+for (var k2 in seenKeys) {
+if (isMeta(k2) || Object.prototype.hasOwnProperty.call(out.data, k2)) continue;
+var v = rg(k2);
+if (v !== null && v !== undefined) out.data[k2] = String(v);
+}
+return out;
+};
+window.__dajuSaveSeen = function() { scanKeys(); return Object.keys(seenKeys); };
+window.__dajuSaveSetSeen = function(data) {
+seenKeys = {};
+for (var k in data) if (!isMeta(k)) seenKeys[k] = 1;
+try { rs(indexKey, JSON.stringify(Object.keys(seenKeys))); } catch (e) {}
+};
 try {
 if (rawLS) {
-rawLS.getItem = function(k) { if (managed(k)) return get(k, null); return rawGet(k); };
-rawLS.setItem = function(k, v) { if (managed(k)) { set(k, v); return; } rawSet(k, v); };
+rawLS.getItem = function(k) { if (managed(k)) return get(k, null); remember(k); return rawGet(k); };
+rawLS.setItem = function(k, v) { if (managed(k)) { set(k, v); return; } remember(k); rawSet(k, v); };
 rawLS.removeItem = function(k) { if (managed(k)) { remove(k); return; } if (rawRemove) rawRemove(k); };
 }
 } catch (e) {}
-try { load(); } catch (e) {}
+try { load(); loadIndex(); scanKeys(); } catch (e) {}
 })();
 """
 

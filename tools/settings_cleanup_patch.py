@@ -386,13 +386,59 @@ coffee: this._coffee
 
 
 SAVE_TRANSFER_JS = r"""
+function __dajuB64Enc(data) {
+var bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+var out = "";
+for (var i = 0; i < bytes.length; i += 3) {
+var a = bytes[i], b = i + 1 < bytes.length ? bytes[i + 1] : 0, c = i + 2 < bytes.length ? bytes[i + 2] : 0;
+out += chars.charAt(a >> 2) + chars.charAt(((a & 3) << 4) | (b >> 4)) + chars.charAt(((b & 15) << 2) | (c >> 6)) + chars.charAt(c & 63);
+}
+var pad = bytes.length % 3;
+if (pad == 1) out = out.substring(0, out.length - 2) + "==";
+else if (pad == 2) out = out.substring(0, out.length - 1) + "=";
+return out;
+}
+function __dajuB64Dec(str) {
+var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+var map = {};
+for (var i = 0; i < chars.length; i++) map[chars.charAt(i)] = i;
+var clean = String(str || "").replace(/[^A-Za-z0-9+/=]/g, "");
+var out = [];
+for (var j = 0; j < clean.length; j += 4) {
+var a = map[clean.charAt(j)], b = map[clean.charAt(j + 1)];
+var c = clean.charAt(j + 2) == "=" ? 0 : map[clean.charAt(j + 2)];
+var d = clean.charAt(j + 3) == "=" ? 0 : map[clean.charAt(j + 3)];
+out.push((a << 2) | (b >> 4));
+if (clean.charAt(j + 2) != "=") out.push(((b & 15) << 4) | (c >> 2));
+if (clean.charAt(j + 3) != "=") out.push(((c & 3) << 6) | d);
+}
+return new Uint8Array(out);
+}
+function __dajuFilePath(name) {
+try { return jsb.fileUtils.getWritablePath() + name; } catch (e) { return name; }
+}
 window.__dajuExportSave = function() {
 try {
-var s = window.__dajuSaveLoad ? window.__dajuSaveLoad() : null;
+var s = window.__dajuSaveSnapshot ? window.__dajuSaveSnapshot() : null;
 if (!s || 1 !== Number(s.version) || !s.data) {
 window.__require("Common").default.showToast("没有可导出的 v1 存档");
 return;
 }
+s.files = {};
+try {
+var st = jsb.fileUtils.getStringFromFile(__dajuFilePath("daju_state.json"));
+if (st) s.files.state = st;
+var chat = jsb.fileUtils.getStringFromFile(__dajuFilePath("daju_chat_store.json"));
+if (chat) s.files.chat = chat;
+} catch (e) {}
+try {
+var head = s.data.daju_profile_head;
+if (head) {
+var raw = jsb.fileUtils.getDataFromFile(head);
+if (raw) s.files.avatar = { path: head, b64: __dajuB64Enc(raw) };
+}
+} catch (e) {}
 var text = JSON.stringify(s);
 if (typeof jsb === "undefined" || !jsb.reflection) {
 window.__require("Common").default.showToast("仅支持 Android 导出");
@@ -417,7 +463,7 @@ window.__require("Common").default.showToast("导入失败: " + (e.message || e)
 }
 };
 window.onDajuSaveExported = function(ok, msg) {
-window.__require("Common").default.showToast(ok ? "存档已导出" : (msg || "导出失败"));
+window.__require("Common").default.showToast(ok ? "存档已导出（全量）" : (msg || "导出失败"));
 };
 window.onDajuSaveImportError = function(msg) {
 window.__require("Common").default.showToast(msg || "存档读取失败");
@@ -426,46 +472,56 @@ window.onDajuSaveImported = function(text) {
 var Common = window.__require("Common").default;
 console.log("DAJU_IMPORT_TEXT", text ? text.length : -1, text ? text.substring(0, 120) : "");
 var KEY = "daju_save_v1";
-var keys = [
-"daju_bag_items", "daju_npc_favors", "daju_train_attrs",
-"daju_shop_daily", "daju_bought_extra_list", "daju_daily_sign_date",
-"daju_profile_name", "daju_profile_head",
-"daju_red_envelope_list", "daju_chat_emotion_status", "daju_gossip_list",
-"daju_intelligence_list", "daju_watch_ad_list", "daju_red_envelope_ad_list",
-"daju_npc_rest_time", "daju_npc_rest_id"
-];
-for (var t = 1; t <= 5; t++) keys.push("daju_train_stage_" + t);
 try {
 var s = JSON.parse(text);
 console.log("DAJU_IMPORT_PARSED", s && s.version, s && typeof s.data);
 if (!s || 1 !== Number(s.version) || !s.data || "object" != typeof s.data) {
 throw new Error("不是 v1 存档格式");
 }
+var data = s.data;
+var files = s.files || {};
 var cur = cc.sys.localStorage.getItem(KEY);
 if (cur) cc.sys.localStorage.setItem(KEY + "_import_backup", cur);
+if (files.state) {
+try { jsb.fileUtils.writeStringToFile(String(files.state), __dajuFilePath("daju_state.json")); } catch (e) {}
+}
+if (files.chat) {
+try { jsb.fileUtils.writeStringToFile(String(files.chat), __dajuFilePath("daju_chat_store.json")); } catch (e) {}
+}
+if (files.avatar && files.avatar.b64) {
+var target = files.avatar.path || __dajuFilePath("profile_avatar_import.png");
+try {
+var bytes = __dajuB64Dec(files.avatar.b64);
+var ok = jsb.fileUtils.writeDataToFile(bytes, target);
+if (!ok) {
+target = __dajuFilePath("profile_avatar_import.png");
+jsb.fileUtils.writeDataToFile(bytes, target);
+}
+data.daju_profile_head = target;
+} catch (e) {}
+}
 cc.sys.localStorage.setItem(KEY, JSON.stringify(s));
 if (window.__dajuSaveReset) window.__dajuSaveReset();
-for (var i = 0; i < keys.length; i++) {
-var k = keys[i];
-if (Object.prototype.hasOwnProperty.call(s.data, k)) {
-cc.sys.localStorage.setItem(k, String(s.data[k]));
-} else {
-cc.sys.localStorage.removeItem(k);
+var seen = window.__dajuSaveSeen ? window.__dajuSaveSeen() : [];
+for (var k in data) {
+if (k.indexOf("daju_save") === 0) continue;
+cc.sys.localStorage.setItem(k, String(data[k]));
 }
+for (var i = 0; i < seen.length; i++) {
+var sk = seen[i];
+if (sk.indexOf("daju_save") === 0) continue;
+if (!Object.prototype.hasOwnProperty.call(data, sk)) cc.sys.localStorage.removeItem(sk);
 }
-for (var dk in s.data) {
-if (dk.indexOf("daju_") === 0 && keys.indexOf(dk) < 0) {
-cc.sys.localStorage.setItem(dk, String(s.data[dk]));
-}
-}
+if (window.__dajuSaveSetSeen) window.__dajuSaveSetSeen(data);
 if (window.__dajuSaveLock) window.__dajuSaveLock(true);
-Common.showToast("存档导入成功，正在重启");
+Common.showToast("全量存档导入成功，正在重启");
 setTimeout(function() { cc.game.restart(); }, 50);
 } catch (e) {
 Common.showToast("存档导入失败: " + (e.message || e));
 }
 };
 """
+
 
 def main() -> None:
     if len(sys.argv) != 3:
