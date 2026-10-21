@@ -583,6 +583,228 @@ t = t || n.giftIdList.length;
 return n.giftIdList[t - 1] ? n.giftIdList[t - 1] : 50000101;
 };"""
 
+CHAT_RED_OLD = """t.prototype.setRedEnvelopeList = function(e) {
+this._redEnvelopeList = e;
+};
+t.prototype.addRedEnvelopeList = function(e) {
+this._redEnvelopeList.push(e);
+};
+t.prototype.isGetRedEnvelope = function(e) {
+return this._redEnvelopeList.indexOf(e) >= 0;
+};
+t.prototype.setChatEmotionStatus = function(e) {
+this._chatEmotionStatus = e;
+};
+t.prototype.addChatEmotionStatus = function(e) {
+this._chatEmotionStatus.push(e);
+};
+t.prototype.isChatEmotionStatus = function(e) {
+return this._chatEmotionStatus.indexOf(e) >= 0;
+};"""
+
+CHAT_RED_NEW = """t.prototype._loadChatState = function() {
+if (this.__dajuChatStateLoaded) return;
+this.__dajuChatStateLoaded = !0;
+var arr = function(k) {
+try {
+var v = cc.sys.localStorage.getItem(k);
+if (!v) return null;
+var a = JSON.parse(v);
+return Array.isArray(a) ? a : null;
+} catch (e) { return null; }
+};
+var a = arr("daju_red_envelope_list");
+if (a) this._redEnvelopeList = a;
+a = arr("daju_chat_emotion_status");
+if (a) this._chatEmotionStatus = a;
+a = arr("daju_gossip_list");
+if (a) this._gossipList = a;
+a = arr("daju_intelligence_list");
+if (a) this._intelligenceList = a;
+a = arr("daju_watch_ad_list");
+if (a) this._watchAdList = a;
+a = arr("daju_red_envelope_ad_list");
+if (a) this._redEnvelopeAdList = a;
+try {
+var rt = cc.sys.localStorage.getItem("daju_npc_rest_time");
+if (rt != null && rt != "") this._npcRestTime = Number(rt) || 0;
+var ri = cc.sys.localStorage.getItem("daju_npc_rest_id");
+if (ri != null && ri != "") this._npcRestId = Number(ri) || 0;
+} catch (e) {}
+};
+t.prototype._saveChatState = function() {
+try {
+cc.sys.localStorage.setItem("daju_red_envelope_list", JSON.stringify(this._redEnvelopeList));
+cc.sys.localStorage.setItem("daju_chat_emotion_status", JSON.stringify(this._chatEmotionStatus));
+cc.sys.localStorage.setItem("daju_gossip_list", JSON.stringify(this._gossipList));
+cc.sys.localStorage.setItem("daju_intelligence_list", JSON.stringify(this._intelligenceList));
+cc.sys.localStorage.setItem("daju_watch_ad_list", JSON.stringify(this._watchAdList));
+cc.sys.localStorage.setItem("daju_red_envelope_ad_list", JSON.stringify(this._redEnvelopeAdList));
+cc.sys.localStorage.setItem("daju_npc_rest_time", String(this._npcRestTime || 0));
+cc.sys.localStorage.setItem("daju_npc_rest_id", String(this._npcRestId || 0));
+} catch (e) {}
+};
+t.prototype.setRedEnvelopeList = function(e) {
+this._loadChatState();
+this._redEnvelopeList = e || [];
+this._saveChatState();
+};
+t.prototype.addRedEnvelopeList = function(e) {
+this._loadChatState();
+this._redEnvelopeList.push(e);
+this._saveChatState();
+};
+t.prototype.isGetRedEnvelope = function(e) {
+this._loadChatState();
+return this._redEnvelopeList.indexOf(e) >= 0;
+};
+t.prototype.setChatEmotionStatus = function(e) {
+this._loadChatState();
+this._chatEmotionStatus = e || [];
+this._saveChatState();
+};
+t.prototype.addChatEmotionStatus = function(e) {
+this._loadChatState();
+this._chatEmotionStatus.push(e);
+this._saveChatState();
+};
+t.prototype.isChatEmotionStatus = function(e) {
+this._loadChatState();
+return this._chatEmotionStatus.indexOf(e) >= 0;
+};"""
+
+CHAT_REST_OLD = """t.prototype.setNpcRestTime = function(e) {
+this._npcRestTime = e;
+};
+t.prototype.npcRestTime = function() {
+return this._npcRestTime;
+};
+t.prototype.setNpcRestId = function(e) {
+this._npcRestId = e;
+};
+t.prototype.npcRestId = function() {
+return this._npcRestId;
+};"""
+
+CHAT_REST_NEW = """t.prototype.setNpcRestTime = function(e) {
+this._loadChatState();
+this._npcRestTime = Number(e) || 0;
+this._saveChatState();
+};
+t.prototype.npcRestTime = function() {
+this._loadChatState();
+return this._npcRestTime;
+};
+t.prototype.setNpcRestId = function(e) {
+this._loadChatState();
+this._npcRestId = Number(e) || 0;
+this._saveChatState();
+};
+t.prototype.npcRestId = function() {
+this._loadChatState();
+return this._npcRestId;
+};"""
+
+CHAT_GOSSIP_OLD = """t.prototype.setBuyGossipList = function(e) {
+this._gossipList = e;
+};
+t.prototype.addBuyGossipId = function(e) {
+this._gossipList.push(e);
+};
+t.prototype.isBuyGossipId = function(e) {
+return !!this._gossipList && this._gossipList.indexOf(e) >= 0;
+};"""
+
+CHAT_GOSSIP_NEW = """t.prototype.setBuyGossipList = function(e) {
+this._loadChatState();
+this._gossipList = e || [];
+this._saveChatState();
+};
+t.prototype.addBuyGossipId = function(e) {
+this._loadChatState();
+this._gossipList.push(e);
+this._saveChatState();
+};
+t.prototype.isBuyGossipId = function(e) {
+this._loadChatState();
+return !!this._gossipList && this._gossipList.indexOf(e) >= 0;
+};"""
+
+CHAT_INTEL_OLD = """t.prototype.setIntelligenceList = function(e) {
+e && (this._intelligenceList = e);
+};
+t.prototype.addIntelligenceId = function(e) {
+this._intelligenceList.push(e);
+};
+t.prototype.isBuyIntelligence = function(e) {
+return !!this._intelligenceList && this._intelligenceList.indexOf(e) >= 0;
+};"""
+
+CHAT_INTEL_NEW = """t.prototype.setIntelligenceList = function(e) {
+this._loadChatState();
+if (e) this._intelligenceList = e;
+this._saveChatState();
+};
+t.prototype.addIntelligenceId = function(e) {
+this._loadChatState();
+this._intelligenceList.push(e);
+this._saveChatState();
+};
+t.prototype.isBuyIntelligence = function(e) {
+this._loadChatState();
+return !!this._intelligenceList && this._intelligenceList.indexOf(e) >= 0;
+};"""
+
+CHAT_AD_OLD = """t.prototype.setWatchAdList = function(e) {
+e && (this._watchAdList = e);
+};
+t.prototype.addWatchAd = function(e) {
+this._watchAdList.push(e);
+};
+t.prototype.isWatchAd = function(e) {
+return !!this._watchAdList && this._watchAdList.indexOf(e) >= 0;
+};"""
+
+CHAT_AD_NEW = """t.prototype.setWatchAdList = function(e) {
+this._loadChatState();
+if (e) this._watchAdList = e;
+this._saveChatState();
+};
+t.prototype.addWatchAd = function(e) {
+this._loadChatState();
+this._watchAdList.push(e);
+this._saveChatState();
+};
+t.prototype.isWatchAd = function(e) {
+this._loadChatState();
+return !!this._watchAdList && this._watchAdList.indexOf(e) >= 0;
+};"""
+
+CHAT_REDAD_OLD = """t.prototype.setRedEnvelopAdList = function(e) {
+e && (this._redEnvelopeAdList = e);
+};
+t.prototype.addRedEnvelopAd = function(e) {
+this._redEnvelopeAdList.push(e);
+};
+t.prototype.isRedEnvelopeAd = function(e) {
+return !!this._redEnvelopeAdList && this._redEnvelopeAdList.indexOf(e) >= 0;
+};"""
+
+CHAT_REDAD_NEW = """t.prototype.setRedEnvelopAdList = function(e) {
+this._loadChatState();
+if (e) this._redEnvelopeAdList = e;
+this._saveChatState();
+};
+t.prototype.addRedEnvelopAd = function(e) {
+this._loadChatState();
+this._redEnvelopeAdList.push(e);
+this._saveChatState();
+};
+t.prototype.isRedEnvelopeAd = function(e) {
+this._loadChatState();
+return !!this._redEnvelopeAdList && this._redEnvelopeAdList.indexOf(e) >= 0;
+};"""
+
 PATCHES = [
     ("getLoginSNS", OLD_SNS, NEW_SNS),
     ("getChannelNameSNS", OLD_CHANNEL, NEW_CHANNEL),
@@ -590,6 +812,12 @@ PATCHES = [
     ("training pass time", PASS_TIME_OLD, PASS_TIME_NEW),
     ("training end stats", END_VIEW_OLD, END_VIEW_NEW),
     ("training stage label", STAGE_LABEL_OLD, STAGE_LABEL_NEW),
+    ("chatStorage red/emotion persistence", CHAT_RED_OLD, CHAT_RED_NEW),
+    ("chatStorage rest persistence", CHAT_REST_OLD, CHAT_REST_NEW),
+    ("chatStorage gossip persistence", CHAT_GOSSIP_OLD, CHAT_GOSSIP_NEW),
+    ("chatStorage intelligence persistence", CHAT_INTEL_OLD, CHAT_INTEL_NEW),
+    ("chatStorage watch ad persistence", CHAT_AD_OLD, CHAT_AD_NEW),
+    ("chatStorage red ad persistence", CHAT_REDAD_OLD, CHAT_REDAD_NEW),
     ("chatStorage npc favors persistence", NPC_FAVOR_OLD, NPC_FAVOR_NEW),
     ("chatStorage early return", OLD_EARLY, NEW_EARLY),
     ("launchOption", OLD_LAUNCH, NEW_LAUNCH),
@@ -613,7 +841,15 @@ var KNOWN = [
 "daju_bought_extra_list",
 "daju_daily_sign_date",
 "daju_profile_name",
-"daju_profile_head"
+"daju_profile_head",
+"daju_red_envelope_list",
+"daju_chat_emotion_status",
+"daju_gossip_list",
+"daju_intelligence_list",
+"daju_watch_ad_list",
+"daju_red_envelope_ad_list",
+"daju_npc_rest_time",
+"daju_npc_rest_id"
 ];
 var rawLS = null, rawGet = null, rawSet = null, rawRemove = null;
 try {
