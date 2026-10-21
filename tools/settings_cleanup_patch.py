@@ -507,7 +507,7 @@ for (var k in data) {
 if (k.indexOf("daju_save") === 0) continue;
 cc.sys.localStorage.setItem(k, String(data[k]));
 }
-for (var i = 0; i < seen.length; i++) {
+if (s.full) for (var i = 0; i < seen.length; i++) {
 var sk = seen[i];
 if (sk.indexOf("daju_save") === 0) continue;
 if (!Object.prototype.hasOwnProperty.call(data, sk)) cc.sys.localStorage.removeItem(sk);

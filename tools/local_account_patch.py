@@ -994,7 +994,7 @@ window.__dajuSaveReset = function() { state = null; };
 window.__dajuSaveLock = function(v) { saveLocked = !!v; };
 window.__dajuSaveSnapshot = function() {
 var s = load();
-var out = { version: 1, savedAt: Date.now(), data: {} };
+var out = { version: 1, full: !0, savedAt: Date.now(), data: {} };
 for (var k in s.data) {
 if (!isMeta(k)) out.data[k] = String(s.data[k]);
 }
