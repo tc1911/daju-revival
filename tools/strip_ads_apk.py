@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import zipfile
+import xml.etree.ElementTree as ET
 import sys
 from pathlib import Path
 
@@ -52,20 +53,46 @@ def run(cmd):
 
 
 def strip_manifest(path: Path) -> None:
-    text = path.read_text(encoding="utf-8")
-    for p in PERMS:
-        text = re.sub(r'\s*<uses-permission[^>]*android:name="%s"[^>]*/>' % re.escape(p), "", text)
-    text = re.sub(r'\s*<permission[^>]*android:name="[^"]*KW_SDK[^"]*"[^>]*/>', "", text)
+    A = "{http://schemas.android.com/apk/res/android}"
+    ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
+    tree = ET.parse(path)
+    root = tree.getroot()
+    for child in list(root):
+        tag = child.tag.split("}")[-1]
+        name = child.get(A + "name", "")
+        if tag == "uses-permission" and name in PERMS:
+            root.remove(child)
+        elif tag == "permission" and "KW_SDK" in name:
+            root.remove(child)
 
-    def drop(m):
-        block = m.group(0)
-        return "" if any(n in block for n in AD_NAMES) else block
+    app = root.find("application")
+    if app is None:
+        raise SystemExit("manifest has no application")
+    app_activity = None
+    for child in list(app):
+        tag = child.tag.split("}")[-1]
+        if tag not in ("activity", "activity-alias", "service", "receiver", "provider"):
+            continue
+        name = child.get(A + "name", "") or child.get(A + "authorities", "")
+        if name.endswith(".AppActivity"):
+            app_activity = child
+        if any(n in name for n in AD_NAMES):
+            app.remove(child)
 
-    # 多行组件块
-    text = re.sub(r'[ \t]*<(activity|service|receiver|provider)\b.*?</\1>', drop, text, flags=re.S)
-    # 自闭合组件块
-    text = re.sub(r'[ \t]*<(activity|service|receiver|provider)\b[^>]*/>', drop, text)
-    path.write_text(text, encoding="utf-8")
+    # 启动器原来在权限引导页上；删掉引导页后必须把 MAIN/LAUNCHER 挪到 AppActivity。
+    if app_activity is None:
+        raise SystemExit("AppActivity missing from manifest")
+    app_activity.set(A + "exported", "true")
+    has_main = False
+    for f in app_activity.findall("intent-filter"):
+        for a in f.findall("action"):
+            if a.get(A + "name") == "android.intent.action.MAIN":
+                has_main = True
+    if not has_main:
+        f = ET.SubElement(app_activity, "intent-filter")
+        ET.SubElement(f, "action", {A + "name": "android.intent.action.MAIN"})
+        ET.SubElement(f, "category", {A + "name": "android.intent.category.LAUNCHER"})
+    tree.write(path, encoding="utf-8", xml_declaration=True)
 
 
 def main() -> None:
