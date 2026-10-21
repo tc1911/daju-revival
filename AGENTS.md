@@ -76,7 +76,7 @@ nopay（merge + offline + local + monetization + album）
 | `daily` | `daily_currency` + `assets.daily_currency` | `official-arm64-daily.apk` |
 | `shop` | `rmb_shop` | `official-arm64-shop.apk` |
 | `profile` | `custom_profile → settings_cleanup → chat_image` + `main_js` | `official-arm64-profile.apk` |
-| `profile-native` | `dex = "profile_bridge"` | `daju-all-dev-224.apk` |
+| `profile-native` | `dex = "profile_bridge"` | `daju-all-dev-226.apk` |
 
 历史 stage 也在表里：`offline`、`local`、`profile-js`、`noshop`；不需要就别构建。
 
@@ -95,19 +95,19 @@ nopay（merge + offline + local + monetization + album）
 与游戏 6.12 并行，独立记录移植版：
 
 ```bash
-tools/version.py show       # 版本 6.12.224 (main=2 revision=24 code=224)
-tools/version.py dev        # 下一个开发/测试版：6.12.225 (main=2 revision=25)
+tools/version.py show       # 版本 6.12.226 (main=2 revision=26 code=226)
+tools/version.py dev        # 下一个开发/测试版：6.12.227 (main=2 revision=27)
 tools/version.py release    # 下一个正式主版本：6.12.300 (main=3 revision=0)
 tools/version.py check
 ```
 
-- 当前 `version.toml`：`main=2`、`revision=24`（`dev`）→ **6.12.224**
+- 当前 `version.toml`：`main=2`、`revision=26`（`dev`）→ **6.12.226**
 - `code = main * 100 + revision`
 - **不自动递增**：改完要测试时手动 `dev`；正式发版用 `release`
-- 对外显示格式为「游戏版本.移植版号」，当前 **6.12.224**；`dev` 后 6.12.225，`release` 后 6.12.300
+- 对外显示格式为「游戏版本.移植版号」，当前 **6.12.226**；`dev` 后 6.12.227，`release` 后 6.12.300
 - Android manifest 仍是游戏原版 `6.12/12`，两套版本不要混用
 - 版本号变化后重跑 `tools/build.py profile-native --force`，并更新 `docs/修改列表.md` 第 0 节
-- 最终 APK 命名：`daju-<arch>-<channel>-<code>.apk`，例如 `daju-all-dev-224.apk`；`build.py` 在 `profile-native` 成功后自动改名
+- 最终 APK 命名：`daju-<arch>-<channel>-<code>.apk`，例如 `daju-all-dev-226.apk`；`build.py` 在 `profile-native` 成功后自动改名
 
 ## 环境变量
 
@@ -151,7 +151,7 @@ work/keystore/          本地签名密钥（gitignore，不提交）
 
 ## 当前状态
 
-- Android arm64 主链已跑通，产物 `work/out/daju-all-dev-224.apk`；
+- Android arm64 主链已跑通，产物 `work/out/daju-all-dev-226.apk`；
   构建由 `tools/pipeline.toml` 一张表驱动，`tools/build.py` 执行；
   大小/SHA256/签名/实机状态见 `docs/修改列表.md` 第 0 节
 - 已完成：离线启动、本地账号与协议兜底、持久化根修复（含背包/货币/道具）、保留商城入口、

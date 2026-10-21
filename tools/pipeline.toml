@@ -195,11 +195,13 @@ apk_out = "work/out/official-arm64-profile.apk"
 
 [[stages]]
 id = "profile-native"
-desc = "主链 6：ProfileBridge 编成 classes3.dex，最终包"
+desc = "主链 7：ProfileBridge 编成 classes3.dex，最终包；最后剥广告 SDK"
 base = "profile"
 rebuild_base = true
 dex = "profile_bridge"
 apk_out = "work/out/official-arm64-profile-native.apk"
+strip_ads = true
+strip_ads_script = "tools/strip_ads_apk.py"
 
 [[stages]]
 id = "noshop"

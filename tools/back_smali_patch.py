@@ -57,6 +57,38 @@ BRIDGE1 = '''.class Lorg/cocos2dx/javascript/AndroidBackBridge$1;
 '''
 
 
+
+def replace_method(text, signature, replacement):
+    start = text.find(signature)
+    if start < 0:
+        return text
+    end = text.find(".end method", start)
+    if end < 0:
+        raise SystemExit(f"method end not found: {signature}")
+    end += len(".end method")
+    return text[:start] + replacement + text[end:]
+
+
+AD_DISABLE = {
+    ".method private premissionDeal()Z": """.method private premissionDeal()Z
+    .locals 1
+
+    const/4 v0, 0x0
+
+    return v0
+.end method""",
+    ".method public static initAD()V": """.method public static initAD()V
+    .locals 0
+
+    return-void
+.end method""",
+    ".method private initADs()V": """.method private initADs()V
+    .locals 0
+
+    return-void
+.end method""",
+}
+
 def main() -> None:
     if len(sys.argv) != 2:
         sys.exit("usage: tools/back_smali_patch.py <smali_classes2>")
@@ -66,14 +98,19 @@ def main() -> None:
 
     old_exit = "invoke-static {}, Lcom/happyelements/hei/common/SdkClient;->exit()V"
     new_back = "invoke-static {}, Lorg/cocos2dx/javascript/AndroidBackBridge;->onBack()V"
-    if text.count(old_exit) != 1:
-        sys.exit(f"AppActivity SdkClient.exit: expected 1, found {text.count(old_exit)}")
-    text = text.replace(old_exit, new_back)
+    if text.count(old_exit) == 1:
+        text = text.replace(old_exit, new_back)
+    elif text.count(new_back) < 1:
+        sys.exit(f"AppActivity SdkClient.exit: unexpected state")
 
     old_super = "invoke-super {p0}, Lorg/cocos2dx/javascript/HeSDKActivity;->onBackPressed()V"
-    if text.count(old_super) != 1:
-        sys.exit(f"AppActivity onBackPressed super: expected 1, found {text.count(old_super)}")
-    text = text.replace(old_super, new_back)
+    if text.count(old_super) == 1:
+        text = text.replace(old_super, new_back)
+    elif text.count(new_back) < 1:
+        sys.exit(f"AppActivity onBackPressed super: unexpected state")
+
+    for sig, repl in AD_DISABLE.items():
+        text = replace_method(text, sig, repl)
 
     open(app, "w", encoding="utf-8").write(text)
 

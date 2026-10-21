@@ -336,6 +336,18 @@ def build_stage(
         if not out.is_file():
             die(f"repack 没有生成输出: {out}")
         print(f"完成: {out} ({out.stat().st_size} B)")
+        if stage.get("strip_ads"):
+            script = path_of(stage.get("strip_ads_script") or "tools/strip_ads_apk.py")
+            tmp = out.with_name(out.stem + ".adsfree.tmp.apk")
+            print("== 剥离广告 SDK / 设备信息库")
+            run_py(script, out, tmp, dry=dry)
+            if not tmp.is_file():
+                die(f"广告剥离没有生成输出: {tmp}")
+            tmp.replace(out)
+            sig = out.with_name(out.name + ".idsig")
+            if sig.exists():
+                sig.unlink()
+            print(f"广告剥离完成: {out} ({out.stat().st_size} B)")
     else:
         print(f"完成（dry-run）: {out}")
     return out
