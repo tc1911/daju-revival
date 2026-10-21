@@ -29,6 +29,25 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parent.parent
 TABLE = ROOT / "tools" / "pipeline.toml"
+VERSION_FILE = ROOT / "version.toml"
+
+
+def project_version() -> tuple[str, int, str]:
+    try:
+        with open(VERSION_FILE, "rb") as f:
+            v = tomllib.load(f)["version"]
+        game = str(v.get("game", "6.12"))
+        code = int(v["main"]) * 100 + int(v["revision"])
+        channel = str(v.get("channel", "release"))
+        return game, code, channel
+    except Exception:
+        return "6.12", 200, "release"
+
+
+def final_artifact_name() -> str:
+    _, code, channel = project_version()
+    return f"daju-all-{channel}-{code}.apk"
+
 
 
 def die(msg: str) -> NoReturn:
@@ -454,7 +473,7 @@ def main(argv: list[str]) -> int:
     if args.force and args.no_deps:
         die("--force 与 --no-deps 不能同时使用")
 
-    build_stage(
+    out = build_stage(
         cfg,
         stage_id,
         out_override=args.out,
@@ -464,6 +483,15 @@ def main(argv: list[str]) -> int:
         keep_overlay=args.keep_overlay,
         force_native=args.force_native,
     )
+    if not args.out and not args.dry_run and stage_id == "profile-native":
+        target = out.parent / final_artifact_name()
+        if target != out:
+            if out.exists():
+                out.replace(target)
+            sig = out.with_name(out.name + ".idsig")
+            if sig.exists():
+                sig.unlink()
+            print(f"成品命名: {target} ({target.stat().st_size} B)")
     return 0
 
 

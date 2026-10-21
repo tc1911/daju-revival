@@ -20,37 +20,45 @@ ROOT = Path(__file__).resolve().parent.parent
 VERSION_FILE = ROOT / "version.toml"
 
 
-def read() -> tuple[int, int, str]:
+def read() -> tuple[int, int, str, str]:
     if not VERSION_FILE.exists():
-        return 2, 0, "6.12"
+        return 2, 0, "6.12", "release"
     text = VERSION_FILE.read_text(encoding="utf-8")
     main = re.search(r"^main\s*=\s*(\d+)", text, re.M)
     revision = re.search(r"^revision\s*=\s*(\d+)", text, re.M)
     game = re.search(r'^game\s*=\s*"([^"]+)"', text, re.M)
+    channel = re.search(r'^channel\s*=\s*"([^"]+)"', text, re.M)
     if not main or not revision:
         sys.exit(f"{VERSION_FILE} 缺少 main/revision")
-    return int(main.group(1)), int(revision.group(1)), game.group(1) if game else "6.12"
+    return (int(main.group(1)), int(revision.group(1)), game.group(1) if game else "6.12",
+            channel.group(1) if channel else "release")
 
 
 def code(main: int, revision: int) -> int:
     return main * 100 + revision
 
 
-def write(main: int, revision: int) -> None:
+def write(main: int, revision: int, channel: str | None = None) -> None:
     if main < 0 or not 0 <= revision <= 99:
         sys.exit("版本范围：main >= 0，0 <= revision <= 99")
     game = read()[2]
+    if channel is None:
+        channel = read()[3]
+    if channel not in ("dev", "release"):
+        sys.exit("channel 只能是 dev 或 release")
     VERSION_FILE.write_text(
         "[version]\n"
         f'game = "{game}"\n'
         f"main = {main}\n"
-        f"revision = {revision}\n",
+        f"revision = {revision}\n"
+        f'channel = "{channel}"\n',
         encoding="utf-8",
     )
 
 
-def show(main: int, revision: int, game: str) -> None:
-    print(f"版本 {game}.{code(main, revision)} (main={main} revision={revision} code={code(main, revision)})")
+def show(main: int, revision: int, game: str, channel: str) -> None:
+    print(f"版本 {game}.{code(main, revision)} {channel} "
+          f"(main={main} revision={revision} code={code(main, revision)})")
 
 
 def main(argv: list[str]) -> int:
@@ -61,20 +69,20 @@ def main(argv: list[str]) -> int:
     p.add_argument("--set", action="store_true", help="手工设置版本")
     args = p.parse_args(argv)
 
-    cur_main, cur_rev, game = read()
+    cur_main, cur_rev, game, channel = read()
     if args.set:
         if args.main is None and args.revision is None:
             sys.exit("--set 需要 --main 或 --revision")
         write(args.main if args.main is not None else cur_main,
-              args.revision if args.revision is not None else cur_rev)
+              args.revision if args.revision is not None else cur_rev, channel)
     elif args.action == "show":
         pass
     elif args.action == "dev":
         if cur_rev >= 99:
             sys.exit("revision 已到 99，不能再加开发版；请发布主版本")
-        write(cur_main, cur_rev + 1)
+        write(cur_main, cur_rev + 1, "dev")
     elif args.action == "release":
-        write(cur_main + 1, 0)
+        write(cur_main + 1, 0, "release")
     elif args.action == "check":
         if not 0 <= cur_rev <= 99:
             sys.exit("revision 超出范围")
