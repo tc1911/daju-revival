@@ -24,6 +24,19 @@
 
 产物哈希、实机状态、验证命令见 `docs/修改列表.md`。
 
+## 版本号
+
+移植版与游戏 6.12 分开编号：
+
+```bash
+tools/version.py show       # 当前 200
+tools/version.py dev        # 开发/测试版 +1 → 201
+tools/version.py release    # 正式主版本 +1 → 300
+```
+
+规则：`code = main * 100 + revision`；当前 `main=2`、`revision=0`，即 **200**。
+关于页会显示「游戏 6.12 · 移植版 200」。Android manifest 仍是游戏原版 `6.12/12`。
+
 ## 加密事实
 
 `assets/src/*.jsc` **不是** JS 字节码，是 **XXTEA（含长度字）→ gzip → JS 源码**：

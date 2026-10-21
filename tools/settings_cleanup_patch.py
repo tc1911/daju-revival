@@ -6,7 +6,9 @@
 - 底部“隐私政策”位置改成“关于”，点击打开一个空白关于页
 - 收紧布局：音频设置上移，底部容器上移
 """
+import tomllib
 import sys
+from pathlib import Path
 
 REFRESH_OLD = '''this.useNickName.active = !1;
 this.disableRmd.active = !1;
@@ -63,6 +65,15 @@ BTN2_NEW = '''case "btn_2<Button>":
 g.AudioPlayer.getInst().playSound(h.AudioUrls.common_sound);
 window.openAboutPage && window.openAboutPage();
 break;'''
+
+def project_version_code() -> int:
+    try:
+        with open(Path(__file__).resolve().parent.parent / "version.toml", "rb") as f:
+            v = tomllib.load(f)["version"]
+        return int(v["main"]) * 100 + int(v["revision"])
+    except Exception:
+        return 200
+
 
 ABOUT_JS = '''
 window.openAboutPage = function() {
@@ -438,7 +449,9 @@ c.default.EventManager.fire(l.EventName.refreshShop);
 };
 t.prototype.setData""", 1)
 
-    text += ABOUT_JS
+    about = ABOUT_JS.replace("版本 6.12 · versionCode 12",
+                             f"游戏 6.12 · 移植版 {project_version_code()}")
+    text += about
     text += BACK_JS
     text += FULL_POWER_JS
     open(out, "w", encoding="utf-8").write(text)

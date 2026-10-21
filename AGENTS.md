@@ -90,6 +90,23 @@ nopay（merge + offline + local + monetization + album）
 - `work/tmp` 保留：`project.*.js`、`main_nohot.js`、`native_profile/android.jar`、
   `official_back_full/`、`apktool_framework/`；截图/日志/中间 APK 可删
 
+## 版本号
+
+与游戏 6.12 并行，独立记录移植版：
+
+```bash
+tools/version.py show       # main=2 revision=0 code=200
+tools/version.py dev        # 下一个开发/测试版：main=2 revision=1 code=201
+tools/version.py release    # 下一个正式主版本：main=3 revision=0 code=300
+tools/version.py check
+```
+
+- 当前 `version.toml`：`main=2`、`revision=0` → **200**
+- `code = main * 100 + revision`
+- **不自动递增**：改完要测试时手动 `dev`；正式发版用 `release`
+- 关于页显示「游戏 6.12 · 移植版 200」；Android manifest 仍是游戏原版 `6.12/12`，两套版本不要混用
+- 版本号变化后重跑 `tools/build.py profile-native --force`，并更新 `docs/修改列表.md` 第 0 节
+
 ## 环境变量
 
 ```bash
@@ -113,7 +130,7 @@ export KS_ALIAS=daju
 ```text
 源文件/                 原始 APK（勿提交）
 compat/                 7 个 OPPO 6.12 arm64 兼容库（来源/校验和见 compat/README.md）
-tools/                  解包/加密/打包/patch + pipeline.toml + build.py
+tools/                  解包/加密/打包/patch + pipeline.toml + build.py + version.py
 docs/                   修改列表、原版代码分析、代码文档、游戏代码文档
 LICENSE / NOTICE.md     非商用许可证与授权范围
 work/extracted/         解包现场（gitignore；oppo/assets/src-js = 解密后 JS）
