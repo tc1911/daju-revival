@@ -98,6 +98,12 @@ def main() -> None:
         sys.exit("patch showAlertDialog: expected 1 match, found %d" % text.count(alert_old))
     text = text.replace(alert_old, alert_new, 1)
 
+    bubble_old = "e.showBubble = function(e, t, n, o) {\nvar i, r = \"\", s = !1, c = 1;"
+    bubble_new = "e.showBubble = function(e, t, n, o) {\nif (t == a.freeCharge) return;\nvar i, r = \"\", s = !1, c = 1;"
+    if text.count(bubble_old) != 1:
+        sys.exit("patch showBubble: expected 1 match, found %d" % text.count(bubble_old))
+    text = text.replace(bubble_old, bubble_new, 1)
+
     start = text.find("t.prototype.popLogin = function() {")
     end = text.find("t.prototype.showTimeLimitPack = function(e, t, n) {", start)
     if start < 0 or end < 0:
