@@ -140,13 +140,44 @@ var __p = {};
 try {
 __p = JSON.parse(this.buildParams)[1][0] || {};
 } catch (e) {}
+var __t = Number(__p.type);
+if (!__t) {
+try {
+var __m = /"type"\s*:\s*(\d+)/.exec(this.buildParams || "");
+if (__m) __t = Number(__m[1]);
+} catch (e) {}
+}
+var __max = { 1: 1883, 2: 3214, 3: 341, 4: 50, 5: 3368 }[__t] || 1;
+var __k = "daju_train_stage_" + __t;
+var __i = 0;
+try {
+__i = Number(cc.sys.localStorage.getItem(__k)) || 0;
+} catch (e) {}
+__i = __i % __max;
+try {
+cc.sys.localStorage.setItem(__k, String((__i + 1) % __max));
+} catch (e) {}
+console.log("DAJU_TRAIN_START", __t, __i, __max, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
-stageList: [ 4 == Number(__p.type) ? 0 : 10000001 ]
+stageList: [ 4 == __t ? __i : 10000001 + __i ]
 });
 return;
 }
 if ("passLevel" == this.method) {
+var __pp = {};
+try {
+__pp = JSON.parse(this.buildParams)[1][0] || {};
+} catch (e) {}
+var __pt = Number(__pp.type);
+if (!__pt) {
+try {
+var __pm = /"type"\s*:\s*(\d+)/.exec(this.buildParams || "");
+if (__pm) __pt = Number(__pm[1]);
+} catch (e) {}
+}
+var __pr = Number(__pp.result);
+console.log("DAJU_TRAIN_PASS", __pt, __pr, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
 rewards: [],
