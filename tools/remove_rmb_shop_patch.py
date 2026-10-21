@@ -82,7 +82,17 @@ var __specialIds = {};
 for (var __ei = 0; __ei < e.length; __ei++) __specialIds[String(e[__ei].serverId)] = 1;
 for (_ in m) {
 v = m[_];
-if (v && v.onSale && "50100023" != v.serverId && "cash" != v.currencyType && !__specialIds[String(v.serverId)]) t.push(v);
+if (v && v.onSale && "50100023" != v.serverId && "cash" != v.currencyType) {
+if (__specialIds[String(v.serverId)]) {
+var __q = {};
+for (var __qk in v) __q[__qk] = v[__qk];
+__q.discountDay = -1;
+__q.discountPrice = 0;
+__q.dailyLimit = 0;
+__q.onSale = 0;
+t.push(__q);
+} else t.push(v);
+}
 }'''
     if text.count(pool_old) != 1:
         sys.exit(f"shop daily pool anchor: expected 1, found {text.count(pool_old)}")
