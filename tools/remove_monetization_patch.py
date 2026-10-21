@@ -104,6 +104,22 @@ def main() -> None:
         sys.exit("patch showBubble: expected 1 match, found %d" % text.count(bubble_old))
     text = text.replace(bubble_old, bubble_new, 1)
 
+    ad_old = "if (this.adNode) {\nthis.adNode.active = !0;"
+    ad_new = "if (this.adNode) {\nthis.adNode.active = !1;"
+    if text.count(ad_old) != 1:
+        sys.exit("patch chat adNode show: expected 1 match, found %d" % text.count(ad_old))
+    text = text.replace(ad_old, ad_new, 1)
+    ad2_old = 'if (this.node.getChildByName("adNode") && this.showAdNode && f.default.canRechargeCash()) {'
+    ad2_new = 'if (this.node.getChildByName("adNode") && !1) {'
+    if text.count(ad2_old) != 1:
+        sys.exit("patch chat adNode click: expected 1 match, found %d" % text.count(ad2_old))
+    text = text.replace(ad2_old, ad2_new, 1)
+    start_old = "this.userChooseView.userClickCallback = this.upliftChatView.bind(this);"
+    start_new = "this.userChooseView.userClickCallback = this.upliftChatView.bind(this);\nthis.adNode && (this.adNode.active = !1);"
+    if text.count(start_old) != 2:
+        sys.exit("patch chat adNode start: expected 2 matches, found %d" % text.count(start_old))
+    text = text.replace(start_old, start_new)
+
     start = text.find("t.prototype.popLogin = function() {")
     end = text.find("t.prototype.showTimeLimitPack = function(e, t, n) {", start)
     if start < 0 or end < 0:
