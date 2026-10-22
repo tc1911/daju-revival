@@ -371,11 +371,8 @@ def prepare_back(cfg: dict, overlay: Path, *, dry: bool, force_native: bool) -> 
             frame.mkdir(parents=True, exist_ok=True)
         run(["apktool", "d", "-f", "-p", frame, "-o", full, official], dry=dry)
 
-    marker = full / c["smali_dir"] / "org" / "cocos2dx" / "javascript" / "AndroidBackBridge.smali"
-    if not marker.is_file():
-        run_py(c["smali_patch"], full / c["smali_dir"], dry=dry)
-    else:
-        print(f"  已存在 smali 桥: {marker.relative_to(ROOT)}")
+    # 每次都跑 smali 补丁：除了返回键，还负责广告类删除和 helper 生命周期截断。
+    run_py(c["smali_patch"], full / c["smali_dir"], dry=dry)
 
     # apktool 会复用 full/build 里的旧 dex；清掉，避免 classes2.dex 少类
     if not dry:

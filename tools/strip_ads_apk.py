@@ -32,14 +32,18 @@ PERMS = [
     "com.happyelements.xstorycncatdetective.permission.KW_SDK_BROADCAST",
 ]
 AD_NAMES = [
-    "com.kwad.", "com.bytedance.sdk.openadsdk", "com.bytedance.embedapplog",
+    "com.kwad.", "com.bykv.", "com.bytedance.sdk.openadsdk", "com.bytedance.embedapplog",
     "com.bytedance.tea.crash", "com.qq.e.", "com.mintegral.", "com.pgl.",
     "com.anythink.", "com.ss.android.downloadlib",
     "org.cocos2dx.javascript.PremissionSplashActivity",
+    "com.happyelements.hei.android.HeDeviceProvider",
     "com.wind.sdk.", "com.wind.devicehelper", "com.bun.miitmdid",
     "com.asus.msa", "com.ta.utdid2",
 ]
-LIBS = set()  # 暂不删 native 库：先保证启动；广告已由组件/权限/初始化层切断
+LIBS = {
+    "libnms.so", "libsgcore.so", "libtobEmbedEncrypt.so",
+    "libbuffer_pg.so", "libfile_lock_pg.so", "lib39285EFA.so",
+}
 
 
 def run(cmd):

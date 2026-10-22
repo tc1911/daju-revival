@@ -4,7 +4,9 @@
 用法：tools/back_smali_patch.py <official_full/smali_classes2>
 """
 import os
+import shutil
 import sys
+from pathlib import Path
 
 BRIDGE = '''.class public Lorg/cocos2dx/javascript/AndroidBackBridge;
 .super Ljava/lang/Object;
@@ -89,6 +91,13 @@ AD_DISABLE = {
 .end method""",
 }
 
+
+AD_PACKAGES = [
+    "com/kwad", "com/bykv", "com/bytedance", "com/mintegral", "com/mbridge",
+    "com/wind", "com/pgl", "com/qq/e", "com/anythink", "com/ss/android",
+    "com/ta/utdid2", "com/bun", "com/yxcorp", "com/kwai", "com/ksad",
+]
+
 def main() -> None:
     if len(sys.argv) != 2:
         sys.exit("usage: tools/back_smali_patch.py <smali_classes2>")
@@ -137,6 +146,28 @@ def main() -> None:
         open(app3_path, "w", encoding="utf-8").write(app3)
     elif app3.count(new_finish) != 1:
         sys.exit(f"AppActivity$3 exit callback: unexpected state")
+
+    # 删除广告/设备信息 SDK 类、宿主 MSA provider，并禁用广告 helper 生命周期。
+    full = Path(root).parent
+    for base in (full / "smali", full / "smali_classes2"):
+        for pkg in AD_PACKAGES:
+            d = base / pkg
+            if d.is_dir():
+                shutil.rmtree(d)
+        for extra in ("com/happyelements/hei/advert",):
+            d = base / extra
+            if d.is_dir():
+                shutil.rmtree(d)
+        for name in ("HeDeviceProvider", "MiitHelper"):
+            for f in (base / "com/happyelements/hei/android").glob(name + "*.smali"):
+                f.unlink()
+    helper = full / "smali/com/happyelements/hei/android/helper/HeSDKAdvertHelper.smali"
+    if helper.is_file():
+        h = helper.read_text(encoding="utf-8")
+        for sig in (".method public onCreateApplication(Landroid/app/Application;)V",
+                    ".method public onDestory(Landroid/app/Activity;)V"):
+            h = replace_method(h, sig, sig + "\n    .locals 0\n\n    return-void\n.end method")
+        helper.write_text(h, encoding="utf-8")
 
     open(os.path.join(root, "org/cocos2dx/javascript/AndroidBackBridge.smali"), "w", encoding="utf-8").write(BRIDGE)
     open(os.path.join(root, "org/cocos2dx/javascript/AndroidBackBridge$1.smali"), "w", encoding="utf-8").write(BRIDGE1)
