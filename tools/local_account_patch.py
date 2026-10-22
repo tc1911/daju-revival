@@ -205,6 +205,7 @@ if (__prm) __pr = Number(__prm[1]);
 } catch (e) {}
 }
 var __pa = __dajuGetAttr(__pt);
+var __oldLv = __pa.lv;
 var __padd = 0;
 var __prewards = [];
 if (__pr >= 1) {
@@ -231,12 +232,15 @@ dayUseCnt: __pa.dayUseCnt,
 dayBuyCnt: __pa.dayBuyCnt
 };
 __dajuSaveTrain();
+}
+var __levels = __pa.lv - __oldLv;
+if (__levels > 0) {
 __prewards = [ {
 itemId: 50001002,
-num: 10000
+num: 10000 * __levels
 }, {
 itemId: 50001001,
-num: 1000
+num: 1000 * __levels
 } ];
 }
 var __ptime = Number(__pp.passTime) || 0;

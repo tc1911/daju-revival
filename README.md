@@ -9,7 +9,7 @@
 
 ## 当前状态
 
-- Android arm64 主链已跑通，产物 `work/out/daju-all-dev-225.apk`
+- Android arm64 主链已跑通，产物 `work/out/daju-all-dev-226.apk`
 - 构建由 `tools/pipeline.toml` 一张表驱动，`tools/build.py` 执行
 - 离线启动：跳过 `login_getClientConfig` 与热更检查，不再等 102 秒
 - 本地 mock 账号 + 业务协议兜底，重启自动进主场景
@@ -29,14 +29,14 @@
 移植版与游戏 6.12 分开编号：
 
 ```bash
-tools/version.py show       # 当前 6.12.225 dev
-tools/version.py dev        # 开发/测试版 +1 → 6.12.226
+tools/version.py show       # 当前 6.12.226 dev
+tools/version.py dev        # 开发/测试版 +1 → 6.12.227
 tools/version.py release    # 正式主版本 +1 → 6.12.300
 ```
 
-规则：`code = main * 100 + revision`，显示为 `<game>.<code>`；当前 `main=2`、`revision=25`（dev），即 **6.12.225**。
-最终 APK 命名：`daju-<arch>-<channel>-<code>.apk`，当前 `daju-all-dev-225.apk`。
-关于页会显示「版本 6.12.225」。Android manifest 仍是游戏原版 `6.12/12`。
+规则：`code = main * 100 + revision`，显示为 `<game>.<code>`；当前 `main=2`、`revision=26`（dev），即 **6.12.226**。
+最终 APK 命名：`daju-<arch>-<channel>-<code>.apk`，当前 `daju-all-dev-226.apk`。
+关于页会显示「版本 6.12.226」。Android manifest 仍是游戏原版 `6.12/12`。
 
 ## 加密事实
 
@@ -86,8 +86,8 @@ tools/build.py back                 # 分阶段；会先重跑 nopay
 tools/build.py profile-native --force   # 改上游后整链重跑
 
 # 验证与装机
-apksigner verify --print-certs work/out/daju-all-dev-225.apk
-adb install -r work/out/daju-all-dev-225.apk
+apksigner verify --print-certs work/out/daju-all-dev-226.apk
+adb install -r work/out/daju-all-dev-226.apk
 ```
 
 ## 目录
