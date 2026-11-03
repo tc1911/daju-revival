@@ -177,11 +177,20 @@ if (__m) __t = Number(__m[1]);
 }
 var __max = __dajuMaxStage[__t] || 1;
 var __i = __dajuStageOf(__t);
+var __list = [];
+if (1 == __t) {
+for (var __j = 0; __j < 5; __j++) {
+var __sj = (__i + __j) % __max;
+__list.push(10000001 + __sj);
+}
+} else {
+__list = [ 4 == __t ? __i : 10000001 + __i ];
+}
 console.log("DAJU_TRAIN_START", __t, __i, __max, this.buildParams);
 this.handler.onResponseInfoSuccess({
 msgCode: 1,
 stageIndex: __i,
-stageList: [ 4 == __t ? __i : 10000001 + __i ]
+stageList: __list
 });
 return;
 }
