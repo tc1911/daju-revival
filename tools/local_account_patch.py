@@ -133,8 +133,20 @@ try {
 cc.sys.localStorage.setItem("daju_train_attrs", JSON.stringify(__dajuTrain));
 } catch (e) {}
 };
+var __dajuDay = function() {
+var d = new Date();
+return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+};
 var __dajuGetAttr = function(t) {
 var a = __dajuTrain[t] || {};
+var today = __dajuDay();
+if (a.dayDate !== today) {
+a.dayUseCnt = 0;
+a.dayBuyCnt = 0;
+a.dayDate = today;
+__dajuTrain[t] = a;
+__dajuSaveTrain();
+}
 var lv = Number(a.lv) || 1;
 var exp = Number(a.exp) || 0;
 return {
@@ -143,6 +155,7 @@ exp: exp,
 dayUseCnt: Number(a.dayUseCnt) || 0,
 dayAddExp: 0,
 dayBuyCnt: Number(a.dayBuyCnt) || 0,
+dayDate: today,
 clgTimes: __dajuStageOf(t),
 redBagNum: 0,
 redBagStartTime: 0,
@@ -156,7 +169,11 @@ this.handler.onResponseInfoSuccess({});
 return;
 }
 if ("getAttrInfo" == this.method) {
-for (var __ti = 1; __ti < 6; __ti++) __dajuAttrs[__ti].clgTimes = __dajuStageOf(__ti);
+for (var __ti = 1; __ti < 6; __ti++) {
+var __ta = __dajuGetAttr(__ti);
+__ta.clgTimes = __dajuStageOf(__ti);
+__dajuAttrs[__ti] = __ta;
+}
 this.handler.onResponseInfoSuccess({
 fiveAttrInfos: __dajuAttrs,
 upgradeLv: 1
@@ -239,7 +256,8 @@ __dajuTrain[__pt] = {
 lv: __pa.lv,
 exp: __pa.exp,
 dayUseCnt: __pa.dayUseCnt,
-dayBuyCnt: __pa.dayBuyCnt
+dayBuyCnt: __pa.dayBuyCnt,
+dayDate: __pa.dayDate
 };
 __dajuSaveTrain();
 }
@@ -301,7 +319,8 @@ __dajuTrain[__bt2] = {
 lv: __ba2.lv,
 exp: __ba2.exp,
 dayUseCnt: __ba2.dayUseCnt,
-dayBuyCnt: __ba2.dayBuyCnt
+dayBuyCnt: __ba2.dayBuyCnt,
+dayDate: __ba2.dayDate
 };
 __dajuSaveTrain();
 console.log("DAJU_TRAIN_BUY", __bt2, __ba2.dayBuyCnt, this.buildParams);
