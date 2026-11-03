@@ -230,10 +230,11 @@ __pa.dayUseCnt = __pa.dayUseCnt + 1;
 var __pkey = "daju_train_stage_" + __pt;
 var __pmax = __dajuMaxStage[__pt] || 1;
 var __pnow = __dajuStageOf(__pt);
+var __pstep = 1 == __pt ? 5 : 1;
 try {
-cc.sys.localStorage.setItem(__pkey, String((__pnow + 1) % __pmax));
+cc.sys.localStorage.setItem(__pkey, String((__pnow + __pstep) % __pmax));
 } catch (e) {}
-__pa.clgTimes = (__pnow + 1) % __pmax;
+__pa.clgTimes = (__pnow + __pstep) % __pmax;
 __dajuTrain[__pt] = {
 lv: __pa.lv,
 exp: __pa.exp,

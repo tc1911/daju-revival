@@ -1,5 +1,5 @@
 [version]
 game = "6.12"
 main = 3
-revision = 1
+revision = 2
 channel = "dev"
